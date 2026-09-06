@@ -1,0 +1,79 @@
+/* Arabic Shisha Lounge - Global CSS & Design System Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette - Luxury Middle Eastern Dark & Gold */
+  --bg-primary: #0b0d12;
+  --bg-secondary: #131722;
+  --bg-card: rgba(23, 27, 38, 0.75);
+  --bg-card-hover: rgba(32, 38, 54, 0.85);
+
+  --accent-gold: #d4af37;
+  --accent-gold-light: #f3e5ab;
+  --accent-amber: #ff9f1c;
+  --accent-ruby: #e63946;
+  --accent-smoke: #8d99ae;
+
+  --text-primary: #f8f9fa;
+  --text-secondary: #adb5bd;
+  --text-muted: #6c757d;
+  --text-gold: #e5c158;
+
+  --border-subtle: rgba(212, 175, 55, 0.15);
+  --border-gold: rgba(212, 175, 55, 0.4);
+
+  --glass-bg: rgba(19, 23, 34, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.2);
+  --glass-blur: blur(16px);
+
+  /* Typography */
+  --font-en: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ar: 'Cairo', sans-serif;
+
+  /* Spacing & Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 9999px;
+
+  /* Shadows & Glows */
+  --shadow-gold-glow: 0 0 25px rgba(212, 175, 55, 0.25);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-en);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* Arabic Language Support Support Class */
+body[dir="rtl"] {
+  font-family: var(--font-ar);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-gold);
+}

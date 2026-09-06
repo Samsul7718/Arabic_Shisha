@@ -1,0 +1,16 @@
+@import './styles/variables.css';
+
+/* Utility Glassmorphism Class */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff 0%, #d4af37 50%, #ff9f1c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
