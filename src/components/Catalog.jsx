@@ -70,7 +70,7 @@ export const Catalog = () => {
           </div>
 
           {/* Brand Filter Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Tag size={16} color="var(--accent-gold)" />
             <select
               value={selectedBrand}
