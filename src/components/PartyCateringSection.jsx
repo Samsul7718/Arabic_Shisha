@@ -234,7 +234,7 @@ export const PartyCateringSection = () => {
             }}
           >
             <CheckCircle size={20} />
-            <span>{lang === 'ar' ? 'تأكيد حجز حفلة الشيشة' : 'Book Hookah Party Catering'}</span>
+            <span>{lang === 'ar' ? 'تأكيد حجز حفلة الشيشة' : 'Book Hookah Party'}</span>
           </button>
         </div>
 
