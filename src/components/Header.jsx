@@ -6,7 +6,7 @@ export const Header = () => {
   const { lang, toggleLanguage, activeTab, setActiveTab, totalCartCount, setIsCartOpen, orders } = useApp();
 
   const navItems = [
-    { id: 'catalog', labelEn: 'Shop & Parlor', labelAr: 'المتجر والمجلس', icon: Store },
+    { id: 'catalog', labelEn: 'Shop', labelAr: ' المجلس', icon: Store },
     { id: 'rental', labelEn: 'Rent a Hookah', labelAr: 'تأجير شيشة', icon: Truck },
     { id: 'party', labelEn: 'Party Catering', labelAr: 'تنظيم حفلات', icon: Sparkles },
     { id: 'blender', labelEn: 'Mix Your Own', labelAr: 'خلطتك الخاصة', icon: Sliders },
@@ -32,7 +32,7 @@ export const Header = () => {
           </div>
           <div>
             <h1 className="gold-gradient-text" style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, lineHeight: 1.1 }}>
-              {lang === 'ar' ? 'متجر ومجلس الشيشة العربي' : 'Arabic Hookah Shop & Parlor'}
+              {lang === 'ar' ? 'متجر ومجلس الشيشة العربي' : 'Arabic Shisha'}
             </h1>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
               {lang === 'ar' ? 'بيع شيش ونكهات • تأجير منازل • تنظيم حفلات' : 'Retail Sales • 24h Pot Rentals • Party Catering'}
