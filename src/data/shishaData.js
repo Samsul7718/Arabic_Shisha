@@ -147,7 +147,7 @@ export const SHISHA_ITEMS = [
     strength: 'Strong',
     profile: 'Spiced & Paan',
     badge: 'Shop Favorite',
-    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
+    image: ''
   },
   {
     id: 'item_2',
@@ -242,7 +242,7 @@ export const SHISHA_ITEMS = [
     id: 'flv_2',
     category: 'flavors',
     brand: 'Soex',
-    nameEn: 'Soex Herbal Mint Flavor Box (Tobacco-Free 50g)',
+    nameEn: 'Soex Herbal Mint Flavor (Tobacco-Free 50g)',
     nameAr: 'علبة معسل سويكس نعناع عشبي (بدون تبغ 50غ)',
     descriptionEn: '100% Herbal Nicotine-Free and Tobacco-Free shisha flavor.',
     descriptionAr: 'نكهة شيشة عشبية 100% خالية تماماً من النيكوتين والتبغ.',

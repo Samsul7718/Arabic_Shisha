@@ -182,7 +182,7 @@ export const ItemDetailModal = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 13, 18, 0.5)', padding: '0.6rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
               <span style={{ fontSize: '0.85rem' }}>
-                {lang === 'ar' ? 'خرطوم آيس مبرد مغلف' : 'Ice Hose Cooling Attachment (+15 AED)'}
+                {lang === 'ar' ? 'خرطوم آيس مبرد مغلف' : 'Ice Cooling Attachment (+15 AED)'}
               </span>
               <input
                 type="checkbox"
