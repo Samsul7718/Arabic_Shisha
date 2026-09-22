@@ -27,7 +27,7 @@ export const RentalSection = () => {
       category: 'rentals',
       nameEn: `Hookah Rental: ${selectedPot.nameEn} (${rentalDurationDays} Day${rentalDurationDays > 1 ? 's' : ''})`,
       nameAr: `تأجير شيشة: ${selectedPot.nameAr} (${rentalDurationDays} يوم)`,
-      descriptionEn: `Includes ${selectedPot.brand} Pot, ${selectedFlavor.nameEn} Flavor Pack, and ${selectedPot.deposit} AED refundable deposit.`,
+      descriptionEn: `Includes ${selectedPot.brand} Pot, ${selectedFlavor.nameEn} Flavor Pack, and ₹${selectedPot.deposit} refundable deposit.`,
       descriptionAr: `تتضمن شيشة ${selectedPot.brand}، علبة معسل ${selectedFlavor.nameAr}، وتأمين مسترد بقيمة ${selectedPot.deposit} درهم.`,
       price: subtotal,
       deposit: selectedPot.deposit,

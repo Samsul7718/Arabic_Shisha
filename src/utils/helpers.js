@@ -1,8 +1,8 @@
 /**
  * Format currency with configured symbol
  */
-export const formatCurrency = (amount, currencySymbol = 'AED') => {
-  return `${amount} ${currencySymbol}`;
+export const formatCurrency = (amount, currencySymbol = '₹') => {
+  return `${currencySymbol} ${amount}`;
 };
 
 /**
