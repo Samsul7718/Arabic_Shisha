@@ -136,7 +136,7 @@ export const SHISHA_ITEMS = [
     id: 'item_1',
     category: 'parlor',
     brand: 'Afzal',
-    nameEn: 'Afzal Pan Raas Parlor Session',
+    nameEn: 'Afzal Pan Raas',
     nameAr: 'جلسة بان راس أفضال بالمجلس',
     descriptionEn: 'Original Afzal Pan Raas served in a Russian Carbon Pot with ice hose attachment.',
     descriptionAr: 'معسل بان راس أفضال الأصلي يقدم في شيشة روسية كربون مع خرطوم آيس.',
