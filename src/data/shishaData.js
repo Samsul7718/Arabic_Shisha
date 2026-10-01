@@ -153,7 +153,7 @@ export const SHISHA_ITEMS = [
     id: 'item_2',
     category: 'parlor',
     brand: 'Al-Fakher',
-    nameEn: 'Al-Fakher Double Apple Parlor Special',
+    nameEn: 'Al-Fakher Double Apple',
     nameAr: 'تفاحتين الفاخر جلسة الصالة',
     descriptionEn: 'Traditional Al-Fakher double apple served in a Pineapple head with natural Coco-Aya coals.',
     descriptionAr: 'تفاحتين الفاخر التقليدي في رأس أناناس طبيعي وفحم كوكو آيا.',
