@@ -1,16 +1,34 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { SHISHA_ITEMS, RENTAL_POT_MODELS } from '../data/shishaData';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [lang, setLang] = useState('en'); // 'en' | 'ar'
-  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'blender' | 'reservation' | 'orders'
+  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'rental' | 'party' | 'blender' | 'orders' | 'admin'
   
   // Catalog Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('all');
+
+  // Dynamic Product & Image Inventory State (persisted in localStorage)
+  const [shishaItems, setShishaItems] = useState(() => {
+    const saved = localStorage.getItem('arabic_shisha_items');
+    return saved ? JSON.parse(saved) : SHISHA_ITEMS;
+  });
+
+  const [rentalPots, setRentalPots] = useState(() => {
+    const saved = localStorage.getItem('arabic_shisha_rentals');
+    return saved ? JSON.parse(saved) : RENTAL_POT_MODELS;
+  });
+
+  // Cloudinary Settings State
+  const [cloudinaryConfig, setCloudinaryConfig] = useState(() => {
+    const saved = localStorage.getItem('cloudinary_config');
+    return saved ? JSON.parse(saved) : { cloudName: 'lujbdfel', uploadPreset: 'zioigfj8' };
+  });
 
   // Modals & Drawers
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -24,6 +42,19 @@ export const AppProvider = ({ children }) => {
   
   // Toast Notification System
   const [toast, setToast] = useState(null);
+
+  // Sync state to localStorage
+  useEffect(() => {
+    localStorage.setItem('arabic_shisha_items', JSON.stringify(shishaItems));
+  }, [shishaItems]);
+
+  useEffect(() => {
+    localStorage.setItem('arabic_shisha_rentals', JSON.stringify(rentalPots));
+  }, [rentalPots]);
+
+  useEffect(() => {
+    localStorage.setItem('cloudinary_config', JSON.stringify(cloudinaryConfig));
+  }, [cloudinaryConfig]);
 
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -39,6 +70,14 @@ export const AppProvider = ({ children }) => {
 
   const toggleLanguage = () => {
     setLang((prev) => (prev === 'en' ? 'ar' : 'en'));
+  };
+
+  const resetInventory = () => {
+    localStorage.removeItem('arabic_shisha_items');
+    localStorage.removeItem('arabic_shisha_rentals');
+    setShishaItems(SHISHA_ITEMS);
+    setRentalPots(RENTAL_POT_MODELS);
+    showToast(lang === 'ar' ? 'تمت إعادة ضبط المنتجات بنجاح' : 'Inventory reset to default catalog', 'info');
   };
 
   const addToCart = (item, options = {}) => {
@@ -101,10 +140,10 @@ export const AppProvider = ({ children }) => {
     const newOrder = {
       orderId: `ASL-${Math.floor(1000 + Math.random() * 9000)}`,
       items: [...cart],
-      totalAmount: cart.reduce((acc, item) => acc + item.price * item.qty, 0) + 15, // + 15 AED service/coal fee
+      totalAmount: cart.reduce((acc, item) => acc + item.price * item.qty, 0) + 15,
       paymentMethod,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      statusStep: 1 // 1: Received, 2: Preparing Coals, 3: Packing Shisha, 4: Served at Table
+      statusStep: 1
     };
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -137,6 +176,13 @@ export const AppProvider = ({ children }) => {
         setInStockOnly,
         selectedProfile,
         setSelectedProfile,
+        shishaItems,
+        setShishaItems,
+        rentalPots,
+        setRentalPots,
+        cloudinaryConfig,
+        setCloudinaryConfig,
+        resetInventory,
         cart,
         addToCart,
         updateCartQty,

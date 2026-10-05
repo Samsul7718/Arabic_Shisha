@@ -147,7 +147,7 @@ export const SHISHA_ITEMS = [
     strength: 'Strong',
     profile: 'Spiced & Paan',
     badge: 'Shop Favorite',
-    image: ''
+    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'item_2',

@@ -6,6 +6,7 @@ import { RentalSection } from './components/RentalSection';
 import { PartyCateringSection } from './components/PartyCateringSection';
 import { ShishaBlender } from './components/ShishaBlender';
 import { OrdersTracker } from './components/OrdersTracker';
+import { AdminManager } from './components/AdminManager';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { ItemDetailModal } from './components/ItemDetailModal';
@@ -24,6 +25,7 @@ function MainContent() {
         {activeTab === 'party' && <PartyCateringSection />}
         {activeTab === 'blender' && <ShishaBlender />}
         {activeTab === 'orders' && <OrdersTracker />}
+        {activeTab === 'admin' && <AdminManager />}
       </main>
 
       {/* Global Modals & Drawers */}

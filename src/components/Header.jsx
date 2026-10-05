@@ -1,16 +1,17 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { ShoppingBag, Globe, Flame, Store, Truck, Sparkles, Sliders, Clock } from 'lucide-react';
+import { ShoppingBag, Globe, Flame, Store, Truck, Sparkles, Sliders, Clock, Cloud } from 'lucide-react';
 
 export const Header = () => {
   const { lang, toggleLanguage, activeTab, setActiveTab, totalCartCount, setIsCartOpen, orders } = useApp();
 
   const navItems = [
-    { id: 'catalog', labelEn: 'Shop', labelAr: ' المجلس', icon: Store },
+    { id: 'catalog', labelEn: 'Shop', labelAr: 'المجلس والمتجر', icon: Store },
     { id: 'rental', labelEn: 'Rent a Hookah', labelAr: 'تأجير شيشة', icon: Truck },
     { id: 'party', labelEn: 'Party Catering', labelAr: 'تنظيم حفلات', icon: Sparkles },
     { id: 'blender', labelEn: 'Mix Your Own', labelAr: 'خلطتك الخاصة', icon: Sliders },
-    { id: 'orders', labelEn: 'Orders & Rentals', labelAr: 'طلباتي وتأجيري', icon: Clock, badge: orders.length }
+    { id: 'orders', labelEn: 'Orders & Rentals', labelAr: 'طلباتي وتأجيري', icon: Clock, badge: orders.length },
+    { id: 'admin', labelEn: 'Cloudinary Admin', labelAr: 'الإدارة والصور', icon: Cloud }
   ];
 
   return (

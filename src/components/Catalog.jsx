@@ -13,13 +13,14 @@ export const Catalog = () => {
     setSelectedCategory,
     inStockOnly,
     setInStockOnly,
-    setSelectedItemDetail
+    setSelectedItemDetail,
+    shishaItems
   } = useApp();
 
   const [selectedBrand, setSelectedBrand] = useState('All Brands');
 
   // Filtering Logic
-  const filteredItems = SHISHA_ITEMS.filter((item) => {
+  const filteredItems = shishaItems.filter((item) => {
     // Search Query Filter
     const matchesSearch =
       searchQuery === '' ||

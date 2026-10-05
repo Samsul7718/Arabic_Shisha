@@ -5,9 +5,9 @@ import { Truck, ShieldCheck, Clock, CheckCircle, Flame, Plus } from 'lucide-reac
 import { formatCurrency } from '../utils/helpers';
 
 export const RentalSection = () => {
-  const { lang, addToCart, showToast } = useApp();
+  const { lang, addToCart, showToast, rentalPots } = useApp();
 
-  const [selectedPot, setSelectedPot] = useState(RENTAL_POT_MODELS[0]);
+  const [selectedPot, setSelectedPot] = useState(rentalPots[0] || RENTAL_POT_MODELS[0]);
   const [rentalDurationDays, setRentalDurationDays] = useState(1); // 1, 2, or 3 days
   const [selectedFlavor, setSelectedFlavor] = useState(SHISHA_FLAVORS_MASTER[0]);
   const [extraCoalBox, setExtraCoalBox] = useState(true);
@@ -82,7 +82,7 @@ export const RentalSection = () => {
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-            {RENTAL_POT_MODELS.map((pot) => {
+            {rentalPots.map((pot) => {
               const isSelected = selectedPot.id === pot.id;
               return (
                 <div
