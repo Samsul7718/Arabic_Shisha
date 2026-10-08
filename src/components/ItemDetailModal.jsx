@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { BOWL_UPGRADES, BASE_LIQUIDS } from '../data/shishaData';
 import { X, Check, Flame, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
+import { ProductCardImage } from './ProductCardImage';
 
 export const ItemDetailModal = () => {
   const { lang, selectedItemDetail, setSelectedItemDetail, addToCart } = useApp();
@@ -92,11 +93,15 @@ export const ItemDetailModal = () => {
 
         {/* Modal Header */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.2rem', alignItems: 'center' }}>
-          <img
-            src={selectedItemDetail.image}
-            alt={selectedItemDetail.nameEn}
-            style={{ width: '80px', height: '80px', borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
-          />
+          <div style={{ width: '100px', flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <ProductCardImage
+              primaryImage={selectedItemDetail.image}
+              secondaryImage={selectedItemDetail.secondaryImage}
+              alt={lang === 'ar' ? selectedItemDetail.nameAr : selectedItemDetail.nameEn}
+              height="100px"
+              lang={lang}
+            />
+          </div>
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               {lang === 'ar' ? selectedItemDetail.nameAr : selectedItemDetail.nameEn}

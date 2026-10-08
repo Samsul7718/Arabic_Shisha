@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { PARTY_PACKAGES } from '../data/shishaData';
 import { Sparkles, Calendar, Users, MapPin, CheckCircle, Flame, Phone } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
+import { ProductCardImage } from './ProductCardImage';
 
 export const PartyCateringSection = () => {
   const { lang, addReservation, showToast } = useApp();
@@ -97,15 +98,23 @@ export const PartyCateringSection = () => {
                     background: isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
                     border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    padding: '1.2rem',
+                    overflow: 'hidden',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  <div>
+                  <ProductCardImage
+                    primaryImage={pkg.image}
+                    secondaryImage={pkg.secondaryImage}
+                    alt={lang === 'ar' ? pkg.nameAr : pkg.nameEn}
+                    height="140px"
+                    brand={`${pkg.potsCount} Pots`}
+                    lang={lang}
+                  />
+                  <div style={{ padding: '1.2rem' }}>
                     <div style={{ fontWeight: 800, fontSize: '1rem', color: isSelected ? 'var(--accent-gold)' : '#fff', marginBottom: '0.4rem' }}>
                       {lang === 'ar' ? pkg.nameAr : pkg.nameEn}
                     </div>
@@ -115,15 +124,15 @@ export const PartyCateringSection = () => {
                     <div style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)' }}>
                       Recommended for: <strong>{pkg.recommendedFor}</strong>
                     </div>
-                  </div>
 
-                  <div style={{ marginTop: '1rem', paddingTop: '0.6rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--accent-gold)', fontSize: '1.2rem' }}>
-                      {formatCurrency(pkg.basePrice)}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
-                      {pkg.potsCount} Hookah Pots
-                    </span>
+                    <div style={{ marginTop: '1rem', paddingTop: '0.6rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--accent-gold)', fontSize: '1.2rem' }}>
+                        {formatCurrency(pkg.basePrice)}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
+                        {pkg.potsCount} Hookah Pots
+                      </span>
+                    </div>
                   </div>
                 </div>
               );

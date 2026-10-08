@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { formatCurrency } from '../utils/helpers';
+import { ProductCardImage } from './ProductCardImage';
 import {
   Upload,
   Cloud,
@@ -55,7 +56,8 @@ export const AdminManager = () => {
     stockStatus: 'in_stock',
     descriptionEn: '',
     descriptionAr: '',
-    image: ''
+    image: '',
+    secondaryImage: ''
   });
 
   const saveCloudinarySettings = (e) => {
@@ -70,8 +72,8 @@ export const AdminManager = () => {
     );
   };
 
-  // Upload image to Cloudinary for a specific item
-  const handleItemImageUpload = async (itemId, file, isRental = false) => {
+  // Upload image to Cloudinary for a specific item (supports field 'image' or 'secondaryImage')
+  const handleItemImageUpload = async (itemId, file, isRental = false, field = 'image') => {
     if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
       showToast(
         lang === 'ar'
@@ -83,20 +85,21 @@ export const AdminManager = () => {
       return;
     }
 
-    setUploadingState((prev) => ({ ...prev, [itemId]: true }));
+    const stateKey = `${itemId}_${field}`;
+    setUploadingState((prev) => ({ ...prev, [stateKey]: true }));
 
     const res = await uploadToCloudinary(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
 
-    setUploadingState((prev) => ({ ...prev, [itemId]: false }));
+    setUploadingState((prev) => ({ ...prev, [stateKey]: false }));
 
     if (res.success && res.url) {
       if (isRental) {
         setRentalPots((prev) =>
-          prev.map((pot) => (pot.id === itemId ? { ...pot, image: res.url } : pot))
+          prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: res.url } : pot))
         );
       } else {
         setShishaItems((prev) =>
-          prev.map((item) => (item.id === itemId ? { ...item, image: res.url } : item))
+          prev.map((item) => (item.id === itemId ? { ...item, [field]: res.url } : item))
         );
       }
       showToast(
@@ -109,7 +112,7 @@ export const AdminManager = () => {
   };
 
   // Upload image for New Item Form
-  const handleNewItemImageUpload = async (file) => {
+  const handleNewItemImageUpload = async (file, field = 'image') => {
     if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
       showToast(
         lang === 'ar'
@@ -120,14 +123,15 @@ export const AdminManager = () => {
       return;
     }
 
-    setUploadingState((prev) => ({ ...prev, new_item: true }));
+    const stateKey = `new_item_${field}`;
+    setUploadingState((prev) => ({ ...prev, [stateKey]: true }));
 
     const res = await uploadToCloudinary(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
 
-    setUploadingState((prev) => ({ ...prev, new_item: false }));
+    setUploadingState((prev) => ({ ...prev, [stateKey]: false }));
 
     if (res.success && res.url) {
-      setNewItem((prev) => ({ ...prev, image: res.url }));
+      setNewItem((prev) => ({ ...prev, [field]: res.url }));
       showToast(
         lang === 'ar' ? 'تم رفع صورة المنتج الجديد إلى كلوديناري!' : 'New product image uploaded to Cloudinary!',
         'success'
@@ -169,14 +173,14 @@ export const AdminManager = () => {
   };
 
   // Update Image URL manually
-  const updateImageUrl = (itemId, newUrl, isRental = false) => {
+  const updateImageUrl = (itemId, newUrl, isRental = false, field = 'image') => {
     if (isRental) {
       setRentalPots((prev) =>
-        prev.map((pot) => (pot.id === itemId ? { ...pot, image: newUrl } : pot))
+        prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: newUrl } : pot))
       );
     } else {
       setShishaItems((prev) =>
-        prev.map((item) => (item.id === itemId ? { ...item, image: newUrl } : item))
+        prev.map((item) => (item.id === itemId ? { ...item, [field]: newUrl } : item))
       );
     }
   };
@@ -214,7 +218,8 @@ export const AdminManager = () => {
       stockStatus: newItem.stockStatus,
       stockQty: newItem.stockStatus === 'in_stock' ? 20 : 0,
       badge: 'New Arrival',
-      image: newItem.image || 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
+      image: newItem.image || 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+      secondaryImage: newItem.secondaryImage || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
     };
 
     setShishaItems((prev) => [createdItem, ...prev]);
@@ -230,7 +235,8 @@ export const AdminManager = () => {
       stockStatus: 'in_stock',
       descriptionEn: '',
       descriptionAr: '',
-      image: ''
+      image: '',
+      secondaryImage: ''
     });
 
     setActiveAdminTab('catalog');
@@ -508,69 +514,24 @@ export const AdminManager = () => {
           {/* Item Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.2rem' }}>
             {filteredCatalog.map((item) => (
-              <div key={item.id} className="glass-panel product-card" style={{ padding: '1.2rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                  {/* Image Preview & Upload Overlay */}
-                  <div style={{ position: 'relative', width: '90px', height: '90px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0, background: '#1a1d24' }}>
-                    <img
-                      src={item.image}
-                      alt={item.nameEn}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80';
-                      }}
-                    />
+              <div key={item.id} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                
+                {/* Interactive Card Image Slider Preview */}
+                <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '0.8rem' }}>
+                  <ProductCardImage
+                    primaryImage={item.image}
+                    secondaryImage={item.secondaryImage}
+                    alt={lang === 'ar' ? item.nameAr : item.nameEn}
+                    height="140px"
+                    brand={item.brand}
+                    lang={lang}
+                  />
+                </div>
 
-                    {/* Quick File Upload Overlay */}
-                    <label
-                      title={lang === 'ar' ? 'رفع صورة جديدة عبر Cloudinary' : 'Upload new photo via Cloudinary'}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.65)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        opacity: uploadingState[item.id] ? 1 : 0.85,
-                        cursor: 'pointer',
-                        color: 'var(--accent-gold-light)',
-                        fontSize: '0.7rem',
-                        textAlign: 'center',
-                        padding: '0.2rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {uploadingState[item.id] ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <RefreshCw size={18} className="spin" />
-                          <span>Uploading...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <Upload size={18} color="var(--accent-gold)" />
-                          <span style={{ marginTop: '2px', fontWeight: 600 }}>
-                            {lang === 'ar' ? 'رفع صورة' : 'Upload Image'}
-                          </span>
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        disabled={uploadingState[item.id]}
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleItemImageUpload(item.id, e.target.files[0], false);
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', textTransform: 'uppercase', fontWeight: 700 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--accent-amber)', textTransform: 'uppercase', fontWeight: 700 }}>
                         {item.brand}
                       </span>
 
@@ -615,48 +576,129 @@ export const AdminManager = () => {
                       </button>
                     </div>
 
-                    <h4 style={{ margin: '0.3rem 0', fontSize: '0.98rem', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <h4 style={{ margin: '0.3rem 0', fontSize: '1rem', fontWeight: 700 }}>
                       {lang === 'ar' ? item.nameAr : item.nameEn}
                     </h4>
 
-                    <div style={{ fontWeight: 800, color: 'var(--accent-gold-light)', fontSize: '0.95rem' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--accent-gold-light)', fontSize: '0.95rem', marginBottom: '0.6rem' }}>
                       {formatCurrency(item.price)}
                     </div>
                   </div>
-                </div>
 
-                {/* Direct Image URL input */}
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', alignItems: 'center' }}>
-                  <Link size={14} color="var(--text-secondary)" />
-                  <input
-                    type="text"
-                    value={item.image}
-                    onChange={(e) => updateImageUrl(item.id, e.target.value, false)}
-                    placeholder="Cloudinary Image URL..."
-                    style={{
-                      flex: 1,
-                      padding: '0.35rem 0.6rem',
-                      fontSize: '0.78rem',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'rgba(0,0,0,0.5)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: 'var(--text-secondary)'
-                    }}
-                  />
-                  <button
-                    onClick={() => handleDeleteItem(item.id, false)}
-                    title={lang === 'ar' ? 'حذف المنتج' : 'Delete item'}
-                    style={{
-                      background: 'rgba(230, 57, 70, 0.15)',
-                      border: '1px solid #e63946',
-                      color: '#e63946',
-                      padding: '0.35rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {/* Primary & Secondary Image URLs & Upload Controls */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+                    
+                    {/* Main Image URL & Upload */}
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '42px' }}>Main:</span>
+                      <input
+                        type="text"
+                        value={item.image}
+                        onChange={(e) => updateImageUrl(item.id, e.target.value, false, 'image')}
+                        placeholder="Primary image URL..."
+                        style={{
+                          flex: 1,
+                          padding: '0.3rem 0.5rem',
+                          fontSize: '0.75rem',
+                          borderRadius: 'var(--radius-sm)',
+                          background: 'rgba(0,0,0,0.5)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'var(--text-secondary)'
+                        }}
+                      />
+                      <label
+                        title="Upload Primary Image"
+                        style={{
+                          background: 'rgba(212,175,55,0.2)',
+                          border: '1px solid var(--border-gold)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0.3rem 0.5rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Upload size={13} color="var(--accent-gold)" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleItemImageUpload(item.id, e.target.files[0], false, 'image');
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Secondary Image URL & Upload */}
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '42px' }}>Hover:</span>
+                      <input
+                        type="text"
+                        value={item.secondaryImage || ''}
+                        onChange={(e) => updateImageUrl(item.id, e.target.value, false, 'secondaryImage')}
+                        placeholder="Secondary hover image URL..."
+                        style={{
+                          flex: 1,
+                          padding: '0.3rem 0.5rem',
+                          fontSize: '0.75rem',
+                          borderRadius: 'var(--radius-sm)',
+                          background: 'rgba(0,0,0,0.5)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'var(--text-secondary)'
+                        }}
+                      />
+                      <label
+                        title="Upload Secondary Hover Image"
+                        style={{
+                          background: 'rgba(212,175,55,0.2)',
+                          border: '1px solid var(--border-gold)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0.3rem 0.5rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Upload size={13} color="var(--accent-gold)" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleItemImageUpload(item.id, e.target.files[0], false, 'secondaryImage');
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
+                      <button
+                        onClick={() => handleDeleteItem(item.id, false)}
+                        title={lang === 'ar' ? 'حذف المنتج' : 'Delete item'}
+                        style={{
+                          background: 'rgba(230, 57, 70, 0.15)',
+                          border: '1px solid rgba(230, 57, 70, 0.4)',
+                          color: '#e63946',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Trash2 size={13} />
+                        <span>{lang === 'ar' ? 'حذف' : 'Delete'}</span>
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             ))}
@@ -668,60 +710,24 @@ export const AdminManager = () => {
       {activeAdminTab === 'rentals' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.2rem' }}>
           {rentalPots.map((pot) => (
-            <div key={pot.id} className="glass-panel product-card" style={{ padding: '1.2rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div style={{ position: 'relative', width: '90px', height: '90px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0, background: '#1a1d24' }}>
-                  <img
-                    src={pot.image}
-                    alt={pot.nameEn}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+            <div key={pot.id} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              
+              {/* Interactive Sliding Card Image Preview */}
+              <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '0.8rem' }}>
+                <ProductCardImage
+                  primaryImage={pot.image}
+                  secondaryImage={pot.secondaryImage}
+                  alt={lang === 'ar' ? pot.nameAr : pot.nameEn}
+                  height="140px"
+                  brand={pot.brand}
+                  lang={lang}
+                />
+              </div>
 
-                  <label
-                    title={lang === 'ar' ? 'رفع صورة جديدة عبر Cloudinary' : 'Upload photo via Cloudinary'}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'rgba(0,0,0,0.65)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: uploadingState[pot.id] ? 1 : 0.85,
-                      cursor: 'pointer',
-                      color: 'var(--accent-gold-light)',
-                      fontSize: '0.7rem',
-                      textAlign: 'center',
-                      padding: '0.2rem'
-                    }}
-                  >
-                    {uploadingState[pot.id] ? (
-                      <RefreshCw size={18} className="spin" />
-                    ) : (
-                      <>
-                        <Upload size={18} color="var(--accent-gold)" />
-                        <span style={{ marginTop: '2px', fontWeight: 600 }}>
-                          {lang === 'ar' ? 'رفع صورة' : 'Upload'}
-                        </span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      disabled={uploadingState[pot.id]}
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleItemImageUpload(pot.id, e.target.files[0], true);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', fontWeight: 700 }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--accent-amber)', fontWeight: 700 }}>
                       {pot.brand}
                     </span>
 
@@ -742,47 +748,129 @@ export const AdminManager = () => {
                     </button>
                   </div>
 
-                  <h4 style={{ margin: '0.3rem 0', fontSize: '0.95rem' }}>
+                  <h4 style={{ margin: '0.3rem 0', fontSize: '1rem', fontWeight: 700 }}>
                     {lang === 'ar' ? pot.nameAr : pot.nameEn}
                   </h4>
 
-                  <div style={{ fontWeight: 800, color: 'var(--accent-gold-light)', fontSize: '0.95rem' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--accent-gold-light)', fontSize: '0.95rem', marginBottom: '0.6rem' }}>
                     {formatCurrency(pot.dailyRate)} / {lang === 'ar' ? 'يوم' : 'day'}
                   </div>
                 </div>
-              </div>
 
-              {/* Direct Image URL input */}
-              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', alignItems: 'center' }}>
-                <Link size={14} color="var(--text-secondary)" />
-                <input
-                  type="text"
-                  value={pot.image}
-                  onChange={(e) => updateImageUrl(pot.id, e.target.value, true)}
-                  placeholder="Cloudinary Image URL..."
-                  style={{
-                    flex: 1,
-                    padding: '0.35rem 0.6rem',
-                    fontSize: '0.78rem',
-                    borderRadius: 'var(--radius-sm)',
-                    background: 'rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'var(--text-secondary)'
-                  }}
-                />
-                <button
-                  onClick={() => handleDeleteItem(pot.id, true)}
-                  style={{
-                    background: 'rgba(230, 57, 70, 0.15)',
-                    border: '1px solid #e63946',
-                    color: '#e63946',
-                    padding: '0.35rem 0.5rem',
-                    borderRadius: 'var(--radius-sm)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Trash2 size={14} />
-                </button>
+                {/* Primary & Secondary Image URLs & Upload Controls */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+                  
+                  {/* Main Image URL & Upload */}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '42px' }}>Main:</span>
+                    <input
+                      type="text"
+                      value={pot.image}
+                      onChange={(e) => updateImageUrl(pot.id, e.target.value, true, 'image')}
+                      placeholder="Primary image URL..."
+                      style={{
+                        flex: 1,
+                        padding: '0.3rem 0.5rem',
+                        fontSize: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    />
+                    <label
+                      title="Upload Primary Image"
+                      style={{
+                        background: 'rgba(212,175,55,0.2)',
+                        border: '1px solid var(--border-gold)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.3rem 0.5rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Upload size={13} color="var(--accent-gold)" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleItemImageUpload(pot.id, e.target.files[0], true, 'image');
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Secondary Image URL & Upload */}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '42px' }}>Hover:</span>
+                    <input
+                      type="text"
+                      value={pot.secondaryImage || ''}
+                      onChange={(e) => updateImageUrl(pot.id, e.target.value, true, 'secondaryImage')}
+                      placeholder="Secondary hover image URL..."
+                      style={{
+                        flex: 1,
+                        padding: '0.3rem 0.5rem',
+                        fontSize: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    />
+                    <label
+                      title="Upload Secondary Hover Image"
+                      style={{
+                        background: 'rgba(212,175,55,0.2)',
+                        border: '1px solid var(--border-gold)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.3rem 0.5rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Upload size={13} color="var(--accent-gold)" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleItemImageUpload(pot.id, e.target.files[0], true, 'secondaryImage');
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
+                    <button
+                      onClick={() => handleDeleteItem(pot.id, true)}
+                      title={lang === 'ar' ? 'حذف المنتج' : 'Delete item'}
+                      style={{
+                        background: 'rgba(230, 57, 70, 0.15)',
+                        border: '1px solid rgba(230, 57, 70, 0.4)',
+                        color: '#e63946',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      <span>{lang === 'ar' ? 'حذف' : 'Delete'}</span>
+                    </button>
+                  </div>
+
+                </div>
               </div>
             </div>
           ))}
@@ -906,10 +994,10 @@ export const AdminManager = () => {
               </div>
             </div>
 
-            {/* Cloudinary Image Picker for New Item */}
+            {/* Primary Image Picker for New Item */}
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 600 }}>
-                {lang === 'ar' ? 'صورة المنتج عبر Cloudinary' : 'Product Image (Cloudinary)'}
+                {lang === 'ar' ? 'الصورة الرئيسية للمنتج (Primary Image)' : 'Primary Product Image'}
               </label>
 
               <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
@@ -941,14 +1029,64 @@ export const AdminManager = () => {
                   }}
                 >
                   <Upload size={16} />
-                  <span>{uploadingState.new_item ? 'Uploading...' : 'Upload File'}</span>
+                  <span>{uploadingState.new_item_image ? 'Uploading...' : 'Upload Main'}</span>
                   <input
                     type="file"
                     accept="image/*"
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        handleNewItemImageUpload(e.target.files[0]);
+                        handleNewItemImageUpload(e.target.files[0], 'image');
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Secondary Hover Image Picker for New Item */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 600 }}>
+                {lang === 'ar' ? 'صورة التمرير والتحريك (Hover Slide Image)' : 'Secondary Hover Image (Sliding View)'}
+              </label>
+
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={newItem.secondaryImage}
+                  onChange={(e) => setNewItem({ ...newItem, secondaryImage: e.target.value })}
+                  placeholder="https://res.cloudinary.com/... or upload hover image"
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(0,0,0,0.5)',
+                    border: '1px solid var(--border-gold)',
+                    color: '#fff'
+                  }}
+                />
+
+                <label
+                  className="btn-gold"
+                  style={{
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Upload size={16} />
+                  <span>{uploadingState.new_item_secondaryImage ? 'Uploading...' : 'Upload Hover'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleNewItemImageUpload(e.target.files[0], 'secondaryImage');
                       }
                     }}
                   />

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { RENTAL_POT_MODELS, SHISHA_FLAVORS_MASTER } from '../data/shishaData';
 import { Truck, ShieldCheck, Clock, CheckCircle, Flame, Plus } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
+import { ProductCardImage } from './ProductCardImage';
 
 export const RentalSection = () => {
   const { lang, addToCart, showToast, rentalPots } = useApp();
@@ -92,16 +93,23 @@ export const RentalSection = () => {
                     background: isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
                     border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    padding: '0.8rem',
+                    overflow: 'hidden',
                     cursor: 'pointer',
                     display: 'flex',
-                    gap: '0.8rem',
-                    alignItems: 'center',
-                    transition: 'all 0.2s ease'
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  <img src={pot.image} alt={pot.nameEn} style={{ width: '65px', height: '65px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
-                  <div style={{ flex: 1 }}>
+                  <ProductCardImage
+                    primaryImage={pot.image}
+                    secondaryImage={pot.secondaryImage}
+                    alt={lang === 'ar' ? pot.nameAr : pot.nameEn}
+                    height="120px"
+                    brand={pot.brand}
+                    lang={lang}
+                  />
+                  <div style={{ padding: '0.8rem', paddingTop: '0.2rem', flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSelected ? 'var(--accent-gold)' : '#fff' }}>
                       {lang === 'ar' ? pot.nameAr : pot.nameEn}
                     </div>

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { SHISHA_ITEMS, SHISHA_CATEGORIES, BRANDS_LIST } from '../data/shishaData';
 import { Search, Filter, Star, CheckCircle, AlertTriangle, XCircle, Plus, Info, Tag } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
+import { ProductCardImage } from './ProductCardImage';
 
 export const Catalog = () => {
   const {
@@ -154,60 +155,47 @@ export const Catalog = () => {
             return (
               <div
                 key={item.id}
-                className="glass-panel"
+                className="glass-panel card-hover-effect"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   overflow: 'hidden',
                   position: 'relative',
                   opacity: isOutOfStock ? 0.7 : 1,
-                  transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+                  transition: 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
+                  borderRadius: 'var(--radius-md)'
                 }}
               >
-                {/* Product Image & Badge Overlay */}
-                <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
-                  <img
-                    src={item.image}
-                    alt={item.nameEn}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: isOutOfStock ? 'grayscale(80%)' : 'none' }}
-                  />
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(19, 23, 34, 0.95), transparent)' }} />
-                  
-                  {/* Brand Tag Top Left */}
-                  <span style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: 'rgba(212, 175, 55, 0.2)',
-                    border: '1px solid var(--border-gold)',
-                    color: 'var(--accent-gold-light)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: 'var(--radius-full)'
-                  }}>
-                    {item.brand}
-                  </span>
-
-                  {/* Stock Status Indicator Pill */}
-                  <div style={{ position: 'absolute', bottom: '10px', left: '12px', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    {isOutOfStock && (
-                      <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <XCircle size={14} /> {lang === 'ar' ? 'نفدت الكمية' : 'Out of Stock'}
-                      </span>
-                    )}
-                    {isLowStock && (
-                      <span style={{ background: 'rgba(255, 159, 28, 0.9)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <AlertTriangle size={14} /> {lang === 'ar' ? `متبقي ${item.stockQty} فقط` : `Low Stock (${item.stockQty} left)`}
-                      </span>
-                    )}
-                    {item.stockStatus === 'in_stock' && (
-                      <span style={{ background: 'rgba(42, 157, 143, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <CheckCircle size={14} /> {lang === 'ar' ? 'متوفر بالمخزن' : 'In Stock'}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {/* Product Image & Badge Overlay with Hover Sliding */}
+                <ProductCardImage
+                  primaryImage={item.image}
+                  secondaryImage={item.secondaryImage}
+                  alt={lang === 'ar' ? item.nameAr : item.nameEn}
+                  height="190px"
+                  isOutOfStock={isOutOfStock}
+                  brand={item.brand}
+                  lang={lang}
+                  onImageClick={() => setSelectedItemDetail(item)}
+                  stockBadge={
+                    <>
+                      {isOutOfStock && (
+                        <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <XCircle size={14} /> {lang === 'ar' ? 'نفدت الكمية' : 'Out of Stock'}
+                        </span>
+                      )}
+                      {isLowStock && (
+                        <span style={{ background: 'rgba(255, 159, 28, 0.9)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <AlertTriangle size={14} /> {lang === 'ar' ? `متبقي ${item.stockQty} فقط` : `Low Stock (${item.stockQty} left)`}
+                        </span>
+                      )}
+                      {item.stockStatus === 'in_stock' && (
+                        <span style={{ background: 'rgba(42, 157, 143, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CheckCircle size={14} /> {lang === 'ar' ? 'متوفر بالمخزن' : 'In Stock'}
+                        </span>
+                      )}
+                    </>
+                  }
+                />
 
                 {/* Card Body */}
                 <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>

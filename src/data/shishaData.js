@@ -33,6 +33,7 @@ export const RENTAL_POT_MODELS = [
     dailyRate: 65,
     deposit: 150,
     image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80',
     descriptionEn: 'High-end Russian carbon fiber stem with magnetic hose adapter & silent diffuser.',
     descriptionAr: 'أنبوب فحم كربوني روسي فاخر مع محول خرطوم مغناطيسي ومكاتم صوت.'
   },
@@ -44,6 +45,7 @@ export const RENTAL_POT_MODELS = [
     dailyRate: 45,
     deposit: 100,
     image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
     descriptionEn: 'Ultra-portable Maya brass stem with unbreakable acrylic base. Perfect for outdoor trips.',
     descriptionAr: 'شيشة مايا نحاسية سهلة الحمل مع قاعدة أكريليك غير قابلة للكسر.'
   },
@@ -56,7 +58,8 @@ export const RENTAL_POT_MODELS = [
     descriptionAr: 'شيشة الأكبر التقليدية المنقوشة يدوياً مع قاعدة كريستالية.',
     dailyRate: 85,
     deposit: 200,
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'rent_cocoaya',
@@ -66,6 +69,7 @@ export const RENTAL_POT_MODELS = [
     dailyRate: 75,
     deposit: 150,
     image: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
     descriptionEn: 'Modern square acrylic pot with remote-controlled multi-color LED light base.',
     descriptionAr: 'شيشة مربعة حديثة مع قاعدة إضاءة ليد متعددة الألوان بجهاز تحكم.'
   }
@@ -81,7 +85,9 @@ export const PARTY_PACKAGES = [
     descriptionEn: 'Includes 3 Premium Hookah Pots, 3 Flavor Boxes, 1 Charcoal Box & Disposable Hoses.',
     descriptionAr: 'تتضمن 3 شيشات فاخرة، 3 علب نكهات، علبة فحم وخرايم استهلاك مرة واحدة.',
     attendantOption: false,
-    recommendedFor: '5 - 12 Guests'
+    recommendedFor: '5 - 12 Guests',
+    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'party_gold',
@@ -92,7 +98,9 @@ export const PARTY_PACKAGES = [
     descriptionEn: 'Includes 6 Hookah Pots, 6 Flavor Boxes, 2 Coal Boxes & 1 On-Site Coal Master Attendant for 4 Hours.',
     descriptionAr: 'تتضمن 6 شيشات، 6 نكهات، 2 علب فحم مع خادم فحم متخصص لمدة 4 ساعات.',
     attendantOption: true,
-    recommendedFor: '15 - 30 Guests'
+    recommendedFor: '15 - 30 Guests',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'party_vip',
@@ -103,7 +111,9 @@ export const PARTY_PACKAGES = [
     descriptionEn: 'Complete wedding/event lounge setup with 12 Pots, Fruit Bowl Upgrades & 2 Master Attendants.',
     descriptionAr: 'تجهيز كامل للحفلات الكبيرة والأعراس مع 12 شيشة ورؤوس أناناس و2 خادم فحم.',
     attendantOption: true,
-    recommendedFor: '30 - 80 Guests'
+    recommendedFor: '30 - 80 Guests',
+    image: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
   }
 ];
 
@@ -147,7 +157,8 @@ export const SHISHA_ITEMS = [
     strength: 'Strong',
     profile: 'Spiced & Paan',
     badge: 'Shop Favorite',
-    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'item_2',
@@ -164,7 +175,8 @@ export const SHISHA_ITEMS = [
     strength: 'Medium',
     profile: 'Fruity & Sweet',
     badge: 'Popular',
-    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
   },
 
   // 2. Hookah Pots for Sale
@@ -183,7 +195,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Hardware',
     badge: 'Top Hardware',
-    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'pot_2',
@@ -200,7 +213,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Hardware',
     badge: 'Portable',
-    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'pot_3',
@@ -217,7 +231,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Hardware',
     badge: 'Classic Craft',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80'
   },
 
   // 3. Retail Flavor Packs
@@ -236,7 +251,8 @@ export const SHISHA_ITEMS = [
     strength: 'Strong',
     profile: 'Spiced & Paan',
     badge: 'Best Seller',
-    image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'flv_2',
@@ -253,7 +269,8 @@ export const SHISHA_ITEMS = [
     strength: '0% Nicotine',
     profile: 'Minty & Cool',
     badge: 'Nicotine Free',
-    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'flv_3',
@@ -270,7 +287,8 @@ export const SHISHA_ITEMS = [
     strength: 'Medium',
     profile: 'Fruity & Sweet',
     badge: 'Original',
-    image: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'flv_4',
@@ -287,7 +305,8 @@ export const SHISHA_ITEMS = [
     strength: 'Medium',
     profile: 'Spiced',
     badge: 'Exotic',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'
   },
 
   // 4. Charcoal & Supplies
@@ -306,7 +325,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Top Charcoal',
-    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'coal_2',
@@ -323,7 +343,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Quick Light',
-    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'coal_3',
@@ -340,14 +361,15 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Quick Light',
-    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'coal_4',
     category: 'coals',
     brand: 'Afreen',
     nameEn: 'Afreen Quick-Light Charcoal Discs (Roll of 10)',
-    nameAr: 'فحم الأفندي سريع الاشتعال (رول 10 أقراص)',
+    nameAr: 'فحم أفرين سريع الاشتعال (رول 10 أقراص)',
     descriptionEn: 'Instant torch-ignited charcoal discs for fast outdoor setup.',
     descriptionAr: 'أقراص فحم الأفندي سريعة الاشتعال بالولاعة فوراً للرحلات.',
     price: 120,
@@ -357,7 +379,8 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Quick Light',
-    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'coal_5',
@@ -374,12 +397,13 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Natural',
-    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
   },
-   {
+  {
     id: 'coal_6',
     category: 'coals',
-    brand: 'AL-AKBAR',
+    brand: 'Al-Akbar',
     nameEn: 'AL-AKBAR Natural Charcoal Cubes (1kg Box)',
     nameAr: 'فحم الأكبار الطبيعي (1 كغ)',
     descriptionEn: 'High density natural coconut charcoal with zero odorless smoke.',
@@ -391,12 +415,13 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Natural',
-    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
   },
-   {
-    id: 'coal_6',
+  {
+    id: 'coal_7',
     category: 'coals',
-    brand: 'GENIE-COCO MAYA',
+    brand: 'Genie-Coco Maya',
     nameEn: 'GENIE-COCO MAYA Natural Charcoal Cubes (1kg Box)',
     nameAr: 'فحم جيني كوكو مايا الطبيعي (1 كغ)',
     descriptionEn: 'High density natural coconut charcoal with zero odorless smoke.',
@@ -408,6 +433,7 @@ export const SHISHA_ITEMS = [
     strength: 'N/A',
     profile: 'Coals',
     badge: 'Natural',
-    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80'
+    image: 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80',
+    secondaryImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'
   }
 ];
