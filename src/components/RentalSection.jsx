@@ -17,7 +17,7 @@ export const RentalSection = () => {
   const calculateRentalSubtotal = () => {
     let rate = selectedPot.dailyRate * rentalDurationDays;
     if (rentalDurationDays === 3) rate *= 0.85; // 15% weekend discount
-    if (extraCoalBox) rate += 20;
+    if (extraCoalBox) rate += 120;
     return Math.round(rate);
   };
 

@@ -3,7 +3,18 @@ import { useApp } from '../context/AppContext';
 import { ShoppingBag, Globe, Flame, Store, Truck, Sparkles, Sliders, Clock, Cloud } from 'lucide-react';
 
 export const Header = () => {
-  const { lang, toggleLanguage, activeTab, setActiveTab, totalCartCount, setIsCartOpen, orders } = useApp();
+  const {
+    lang,
+    toggleLanguage,
+    activeTab,
+    setActiveTab,
+    totalCartCount,
+    setIsCartOpen,
+    orders,
+    partyBookings,
+    adminWhatsAppPhone,
+    setAdminSubTab
+  } = useApp();
 
   const navItems = [
     { id: 'catalog', labelEn: 'Shop', labelAr: 'المجلس والمتجر', icon: Store },
@@ -11,7 +22,7 @@ export const Header = () => {
     { id: 'party', labelEn: 'Party Catering', labelAr: 'تنظيم حفلات', icon: Sparkles },
     { id: 'blender', labelEn: 'Mix Your Own', labelAr: 'خلطتك الخاصة', icon: Sliders },
     { id: 'orders', labelEn: 'Orders & Rentals', labelAr: 'طلباتي وتأجيري', icon: Clock, badge: orders.length },
-    { id: 'admin', labelEn: 'Cloudinary Admin', labelAr: 'الإدارة والصور', icon: Cloud }
+    { id: 'admin', labelEn: 'Admin & Parties', labelAr: 'لوحة الإدارة والحفلات', icon: Cloud, badge: partyBookings?.length }
   ];
 
   return (
@@ -49,7 +60,12 @@ export const Header = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'admin') {
+                    setAdminSubTab('parties');
+                  }
+                }}
                 style={{
                   background: isActive ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(255, 159, 28, 0.15))' : 'transparent',
                   border: isActive ? '1px solid var(--border-gold)' : '1px solid transparent',
@@ -88,7 +104,7 @@ export const Header = () => {
         {/* Right Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <a
-            href="https://wa.me/919960154761"
+            href={`https://wa.me/${adminWhatsAppPhone || '919960154761'}`}
             target="_blank"
             rel="noopener noreferrer"
             title={lang === 'ar' ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}

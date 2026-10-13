@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { formatCurrency } from '../utils/helpers';
 import { ProductCardImage } from './ProductCardImage';
+import {
+  formatUserPartyWhatsAppMessage,
+  formatAdminPartyWhatsAppMessage,
+  formatUserPartyCancellationWhatsAppMessage,
+  formatAdminPartyCancellationWhatsAppMessage,
+  openWhatsApp,
+  getWhatsAppUrl
+} from '../utils/whatsapp';
 import {
   Upload,
   Cloud,
@@ -19,7 +27,16 @@ import {
   ShieldCheck,
   Package,
   Layers,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Phone,
+  CreditCard,
+  Send,
+  ExternalLink,
+  Filter
 } from 'lucide-react';
 
 export const AdminManager = () => {
@@ -29,15 +46,55 @@ export const AdminManager = () => {
     setShishaItems,
     rentalPots,
     setRentalPots,
+    partyPackages,
+    updatePartyPackagePrice,
+    updatePartyBookingAmount,
     cloudinaryConfig,
     setCloudinaryConfig,
     showToast,
-    resetInventory
+    resetInventory,
+    partyBookings,
+    updatePartyBookingStatus,
+    deletePartyBooking,
+    adminWhatsAppPhone,
+    setAdminWhatsAppPhone,
+    adminSubTab,
+    setAdminSubTab
   } = useApp();
 
-  const [activeAdminTab, setActiveAdminTab] = useState('catalog'); // 'catalog' | 'rentals' | 'settings' | 'add'
+  const [activeAdminTab, setActiveAdminTab] = useState(adminSubTab || 'parties'); // 'parties' | 'catalog' | 'rentals' | 'settings' | 'add'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Party Bookings filter state
+  const [partySearchQuery, setPartySearchQuery] = useState('');
+  const [partyStatusFilter, setPartyStatusFilter] = useState('all');
+  const [adminPhoneInput, setAdminPhoneInput] = useState(adminWhatsAppPhone);
+
+  // States for modifying party card amount
+  const [editingBookingCode, setEditingBookingCode] = useState(null);
+  const [editingAmountInput, setEditingAmountInput] = useState('');
+  const [packagePricesDraft, setPackagePricesDraft] = useState({});
+
+  // State for Party Cancellation & WhatsApp Notification Modal
+  const [partyToCancelModal, setPartyToCancelModal] = useState(null);
+
+  const handlePackagePriceChange = (pkgId, val) => {
+    setPackagePricesDraft((prev) => ({ ...prev, [pkgId]: val }));
+  };
+
+  const handleSavePackagePrice = (pkgId) => {
+    const val = packagePricesDraft[pkgId];
+    if (val !== undefined && val !== '') {
+      updatePartyPackagePrice(pkgId, val);
+    }
+  };
+
+  useEffect(() => {
+    if (adminSubTab) {
+      setActiveAdminTab(adminSubTab);
+    }
+  }, [adminSubTab]);
 
   // Cloudinary credentials form
   const [cloudNameInput, setCloudNameInput] = useState(cloudinaryConfig.cloudName || 'lujbdfel');
@@ -287,8 +344,46 @@ export const AdminManager = () => {
 
         {/* Sub Navigation */}
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
+          {/* REQUIREMENT 2: Admin clicks this button to show all booking party list */}
           <button
-            onClick={() => setActiveAdminTab('catalog')}
+            id="admin-party-bookings-tab-btn"
+            onClick={() => {
+              setActiveAdminTab('parties');
+              setAdminSubTab('parties');
+            }}
+            style={{
+              padding: '0.5rem 1.15rem',
+              borderRadius: 'var(--radius-full)',
+              background: activeAdminTab === 'parties' ? 'linear-gradient(135deg, #d4af37, #ff9f1c)' : 'rgba(255,255,255,0.05)',
+              color: activeAdminTab === 'parties' ? '#000' : 'var(--text-main)',
+              fontWeight: 800,
+              border: activeAdminTab === 'parties' ? 'none' : '1px solid var(--border-gold)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: activeAdminTab === 'parties' ? 'var(--shadow-gold-glow)' : 'none'
+            }}
+          >
+            <Sparkles size={16} color={activeAdminTab === 'parties' ? '#000' : 'var(--accent-gold)'} />
+            <span>{lang === 'ar' ? 'حجوزات الحفلات' : 'Party Bookings'}</span>
+            <span style={{
+              background: activeAdminTab === 'parties' ? '#000' : 'var(--accent-gold)',
+              color: activeAdminTab === 'parties' ? 'var(--accent-gold)' : '#000',
+              padding: '1px 8px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.72rem',
+              fontWeight: 800
+            }}>
+              {partyBookings.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveAdminTab('catalog');
+              setAdminSubTab('catalog');
+            }}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: 'var(--radius-full)',
@@ -307,7 +402,10 @@ export const AdminManager = () => {
           </button>
 
           <button
-            onClick={() => setActiveAdminTab('rentals')}
+            onClick={() => {
+              setActiveAdminTab('rentals');
+              setAdminSubTab('rentals');
+            }}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: 'var(--radius-full)',
@@ -326,7 +424,10 @@ export const AdminManager = () => {
           </button>
 
           <button
-            onClick={() => setActiveAdminTab('add')}
+            onClick={() => {
+              setActiveAdminTab('add');
+              setAdminSubTab('add');
+            }}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: 'var(--radius-full)',
@@ -345,7 +446,10 @@ export const AdminManager = () => {
           </button>
 
           <button
-            onClick={() => setActiveAdminTab('settings')}
+            onClick={() => {
+              setActiveAdminTab('settings');
+              setAdminSubTab('settings');
+            }}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: 'var(--radius-full)',
@@ -360,10 +464,824 @@ export const AdminManager = () => {
             }}
           >
             <Cloud size={16} />
-            <span>{lang === 'ar' ? 'إعدادات كلوديناري' : 'Cloudinary Settings'}</span>
+            <span>{lang === 'ar' ? 'إعدادات كلوديناري والواتساب' : 'Cloudinary & WhatsApp Settings'}</span>
           </button>
         </div>
       </div>
+
+      {/* REQUIREMENT 2: ALL BOOKING PARTY LIST (PARTY ROSTER VIEW) */}
+      {activeAdminTab === 'parties' && (
+        <div>
+          {/* Top Banner with Stats & Admin Alert */}
+          <div className="glass-panel" style={{ padding: '1.8rem', marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(212,175,55,0.12), rgba(0,0,0,0.5))' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Sparkles size={24} color="var(--accent-gold)" />
+                  <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>
+                    {lang === 'ar' ? 'سجل وحجوزات حفلات الشيشة الميدانية' : 'Party Catering Bookings Roster'}
+                  </h3>
+                </div>
+                <p style={{ margin: '0.3rem 0 0', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                  {lang === 'ar'
+                    ? 'عرض كافة الحفلات المحجوزة، تفاصيل البطاقات الضامنة، وإرسال إشعارات وتأكيدات الواتساب المباشرة.'
+                    : 'Manage all booked hookah parties, inspect required card guarantees, and trigger instant WhatsApp dispatch.'}
+                </p>
+              </div>
+
+              {/* REQUIREMENT 3: Roster Alert to Admin WhatsApp */}
+              <button
+                type="button"
+                id="admin-whatsapp-roster-alert-btn"
+                onClick={() => {
+                  const summary = `🚨 *ARABIC SHISHA — ACTIVE PARTY ROSTER ALERT* 🚨\nTotal Active Bookings: ${partyBookings.length}\n` +
+                    partyBookings.slice(0, 5).map(b => `• ${b.bookingCode}: ${b.packageNameEn} on ${b.eventDate} @ ${b.eventTime} (${b.organizerName} - ${b.organizerPhone})`).join('\n') +
+                    `\n\nAdmin Notification dispatched to: +${adminWhatsAppPhone}`;
+                  openWhatsApp(adminWhatsAppPhone, summary);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '0.65rem 1.3rem',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 15px rgba(37, 211, 102, 0.3)'
+                }}
+              >
+                <Send size={16} />
+                <span>{lang === 'ar' ? `إرسال كشف الحفلات لواتساب الإدارة (+${adminWhatsAppPhone})` : `Send Full Roster to Admin WhatsApp (+${adminWhatsAppPhone})`}</span>
+              </button>
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+              <div style={{ background: 'rgba(11, 13, 18, 0.7)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>
+                  {lang === 'ar' ? 'إجمالي الحفلات المحجوزة' : 'Total Party Bookings'}
+                </span>
+                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--accent-gold)' }}>
+                  {partyBookings.length}
+                </span>
+              </div>
+
+              <div style={{ background: 'rgba(11, 13, 18, 0.7)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>
+                  {lang === 'ar' ? 'قيمة الحجوزات الإجمالية' : 'Total Catering Value'}
+                </span>
+                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--accent-gold)' }}>
+                  {formatCurrency(partyBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0))}
+                </span>
+              </div>
+
+              <div style={{ background: 'rgba(11, 13, 18, 0.7)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>
+                  {lang === 'ar' ? 'مجموع الشيشات المطلوبة' : 'Hookah Pots Needed'}
+                </span>
+                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ff9f1c' }}>
+                  {partyBookings.reduce((sum, b) => sum + (b.potsCount || 0), 0)} Pots
+                </span>
+              </div>
+
+              <div style={{ background: 'rgba(11, 13, 18, 0.7)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>
+                  {lang === 'ar' ? 'الحفلات المؤكدة' : 'Confirmed Active'}
+                </span>
+                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#2a9d8f' }}>
+                  {partyBookings.filter(b => b.status === 'Confirmed').length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* PARTY PACKAGE CARD AMOUNTS / PRICING TIERS MANAGER */}
+          <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', background: 'rgba(11, 13, 18, 0.75)', border: '1px solid var(--border-gold)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CreditCard size={20} color="var(--accent-gold)" />
+                <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#fff' }}>
+                  {lang === 'ar' ? 'تعديل أسعار كروت حزم الحفلات (Party Package Card Amounts)' : 'Modify Party Package Card Amounts & Tiers'}
+                </h4>
+              </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                {lang === 'ar' ? 'تعديل السعر هنا يحدّث أسعار الحزم في قسم تنظيم الحفلات تلقائياً' : 'Changing amounts here updates the party cards in the catering section immediately'}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              {(partyPackages || []).map((pkg) => {
+                const currentDraft = packagePricesDraft[pkg.id] !== undefined ? packagePricesDraft[pkg.id] : pkg.basePrice;
+                const hasChanged = String(currentDraft) !== String(pkg.basePrice);
+
+                return (
+                  <div
+                    key={pkg.id}
+                    style={{
+                      background: 'rgba(19, 23, 34, 0.9)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '1.1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '0.8rem'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.98rem', marginBottom: '0.2rem' }}>
+                        {lang === 'ar' ? pkg.nameAr : pkg.nameEn}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        {pkg.potsCount} Pots • {pkg.recommendedFor}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <span style={{ color: 'var(--accent-gold)', fontWeight: 800, fontSize: '1.1rem' }}>₹</span>
+                      <input
+                        type="number"
+                        value={currentDraft}
+                        onChange={(e) => handlePackagePriceChange(pkg.id, e.target.value)}
+                        placeholder="Card Amount"
+                        style={{
+                          flex: 1,
+                          padding: '0.55rem 0.75rem',
+                          background: 'rgba(0,0,0,0.6)',
+                          border: '1px solid var(--border-gold)',
+                          borderRadius: 'var(--radius-sm)',
+                          color: '#fff',
+                          fontWeight: 800,
+                          fontSize: '1rem',
+                          outline: 'none'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSavePackagePrice(pkg.id)}
+                        disabled={!hasChanged}
+                        style={{
+                          background: hasChanged ? 'linear-gradient(135deg, #d4af37, #ff9f1c)' : 'rgba(255,255,255,0.08)',
+                          color: hasChanged ? '#000' : 'var(--text-muted)',
+                          border: 'none',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '0.55rem 1rem',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          cursor: hasChanged ? 'pointer' : 'default',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Save size={14} />
+                        <span>{lang === 'ar' ? 'حفظ' : 'Save'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="glass-panel" style={{ padding: '1rem 1.2rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', flex: 1, minWidth: '260px' }}>
+              <input
+                type="text"
+                placeholder={lang === 'ar' ? 'بحث باسم المنظم، رمز الحجز، الهاتف، أو الموقع...' : 'Search by organizer, ref code, phone, or venue location...'}
+                value={partySearchQuery}
+                onChange={(e) => setPartySearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(11, 13, 18, 0.8)',
+                  border: '1px solid var(--border-subtle)',
+                  color: '#fff',
+                  outline: 'none',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+
+            {/* Status Pills Filter */}
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {['all', 'Confirmed', 'In Preparation', 'Dispatched', 'Completed', 'Cancelled'].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setPartyStatusFilter(st)}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: '1px solid var(--border-subtle)',
+                    background: partyStatusFilter === st ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)',
+                    color: partyStatusFilter === st ? '#000' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {st === 'all' ? (lang === 'ar' ? 'الكل' : 'All') : st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Party Bookings Roster Cards */}
+          {partyBookings.filter((b) => {
+            const q = partySearchQuery.toLowerCase().trim();
+            const matchesSearch =
+              !q ||
+              b.organizerName?.toLowerCase().includes(q) ||
+              b.bookingCode?.toLowerCase().includes(q) ||
+              b.organizerPhone?.includes(q) ||
+              b.eventLocation?.toLowerCase().includes(q) ||
+              b.eventDate?.includes(q);
+            const matchesStatus = partyStatusFilter === 'all' || b.status === partyStatusFilter;
+            return matchesSearch && matchesStatus;
+          }).length === 0 ? (
+            <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <Calendar size={48} color="var(--accent-gold)" style={{ marginBottom: '1rem' }} />
+              <h4 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '0.5rem' }}>
+                {lang === 'ar' ? 'لا توجد حجوزات حفلات تطابق البحث' : 'No Party Bookings Found'}
+              </h4>
+              <p style={{ fontSize: '0.88rem' }}>
+                {lang === 'ar' ? 'جرب تغيير فلاتر البحث أو تأكيد حجز حفلة جديدة من قسم تنظيم الحفلات.' : 'Try adjusting search query or book a new party from the Party Catering section.'}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              {partyBookings
+                .filter((b) => {
+                  const q = partySearchQuery.toLowerCase().trim();
+                  const matchesSearch =
+                    !q ||
+                    b.organizerName?.toLowerCase().includes(q) ||
+                    b.bookingCode?.toLowerCase().includes(q) ||
+                    b.organizerPhone?.includes(q) ||
+                    b.eventLocation?.toLowerCase().includes(q) ||
+                    b.eventDate?.includes(q);
+                  const matchesStatus = partyStatusFilter === 'all' || b.status === partyStatusFilter;
+                  return matchesSearch && matchesStatus;
+                })
+                .map((b) => (
+                  <div
+                    key={b.bookingCode || b.id}
+                    className="glass-panel"
+                    style={{
+                      padding: '1.5rem',
+                      border: '1px solid var(--border-gold)',
+                      background: 'rgba(19, 23, 34, 0.85)',
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Card Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1rem', paddingBottom: '0.8rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                        <span style={{
+                          background: 'linear-gradient(135deg, #d4af37, #ff9f1c)',
+                          color: '#000',
+                          fontWeight: 800,
+                          padding: '3px 10px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.82rem'
+                        }}>
+                          {b.bookingCode}
+                        </span>
+                        <strong style={{ fontSize: '1.1rem', color: '#fff' }}>
+                          {lang === 'ar' ? b.packageNameAr || b.packageNameEn : b.packageNameEn}
+                        </strong>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                        {/* Status Dropdown */}
+                        <select
+                          value={b.status || 'Confirmed'}
+                          onChange={(e) => updatePartyBookingStatus(b.bookingCode, e.target.value)}
+                          style={{
+                            background:
+                              b.status === 'Confirmed' ? 'rgba(42, 157, 143, 0.25)' :
+                              b.status === 'In Preparation' ? 'rgba(255, 159, 28, 0.25)' :
+                              b.status === 'Dispatched' ? 'rgba(69, 123, 157, 0.25)' :
+                              b.status === 'Completed' ? 'rgba(106, 5, 114, 0.25)' : 'rgba(230, 57, 70, 0.25)',
+                            border: '1px solid var(--border-subtle)',
+                            color: '#fff',
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: 'var(--radius-full)',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="Confirmed" style={{ background: '#131722', color: '#fff' }}>Confirmed</option>
+                          <option value="In Preparation" style={{ background: '#131722', color: '#fff' }}>In Preparation</option>
+                          <option value="Dispatched" style={{ background: '#131722', color: '#fff' }}>Dispatched</option>
+                          <option value="Completed" style={{ background: '#131722', color: '#fff' }}>Completed</option>
+                          <option value="Cancelled" style={{ background: '#131722', color: '#fff' }}>Cancelled</option>
+                        </select>
+
+                        {/* Total Price with Interactive Admin Amount Editor */}
+                        {editingBookingCode === b.bookingCode ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(0,0,0,0.7)', padding: '3px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent-gold)' }}>
+                            <span style={{ color: 'var(--accent-gold)', fontWeight: 800, fontSize: '0.9rem' }}>₹</span>
+                            <input
+                              type="number"
+                              value={editingAmountInput}
+                              onChange={(e) => setEditingAmountInput(e.target.value)}
+                              placeholder="Amount"
+                              autoFocus
+                              style={{
+                                width: '85px',
+                                padding: '3px 6px',
+                                background: '#0b0d12',
+                                border: '1px solid var(--border-gold)',
+                                borderRadius: '4px',
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: '0.9rem',
+                                outline: 'none'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              title={lang === 'ar' ? 'حفظ المبلغ المعدل' : 'Save Modified Amount'}
+                              onClick={() => {
+                                updatePartyBookingAmount(b.bookingCode, editingAmountInput);
+                                setEditingBookingCode(null);
+                              }}
+                              style={{
+                                background: 'linear-gradient(135deg, #2a9d8f, #21867a)',
+                                border: 'none',
+                                color: '#fff',
+                                borderRadius: '4px',
+                                padding: '4px 7px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              title={lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                              onClick={() => setEditingBookingCode(null)}
+                              style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: '#adb5bd',
+                                borderRadius: '4px',
+                                padding: '4px 7px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-gold)' }}>
+                              {formatCurrency(b.totalPrice)}
+                            </span>
+                            <button
+                              type="button"
+                              title={lang === 'ar' ? 'تعديل مبلغ الحجز' : 'Modify party card amount'}
+                              onClick={() => {
+                                setEditingBookingCode(b.bookingCode);
+                                setEditingAmountInput(b.totalPrice);
+                              }}
+                              style={{
+                                background: 'rgba(212, 175, 55, 0.15)',
+                                border: '1px solid var(--border-gold)',
+                                color: 'var(--accent-gold-light)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '3px 8px',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <Edit size={12} color="var(--accent-gold)" />
+                              <span>{lang === 'ar' ? 'تعديل المبلغ' : 'Modify Amount'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Booking Details Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.2rem', fontSize: '0.88rem' }}>
+                      
+                      {/* Event Date & Time (Highlighted) */}
+                      <div style={{ background: 'rgba(212, 175, 55, 0.08)', padding: '0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                        <div style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Calendar size={14} />
+                          <span>{lang === 'ar' ? 'تاريخ ووقت الحفلة:' : 'Event Date & Time:'}</span>
+                        </div>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                          {b.eventDate}
+                        </div>
+                        <div style={{ color: 'var(--accent-gold-light)', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '2px' }}>
+                          <Clock size={13} />
+                          <span>{b.eventTime}</span>
+                        </div>
+                      </div>
+
+                      {/* Venue Location Address */}
+                      <div style={{ background: 'rgba(11, 13, 18, 0.6)', padding: '0.8rem', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <MapPin size={14} />
+                          <span>{lang === 'ar' ? 'الموقع / العنوان:' : 'Venue Address:'}</span>
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 600 }}>
+                          {b.eventLocation}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                          {b.potsCount} Hookah Pots • {b.guestCount || 'Standard group'}
+                        </div>
+                      </div>
+
+                      {/* Organizer Contact */}
+                      <div style={{ background: 'rgba(11, 13, 18, 0.6)', padding: '0.8rem', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Users size={14} />
+                          <span>{lang === 'ar' ? 'بيانات المنظم:' : 'Organizer:'}</span>
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700 }}>
+                          {b.organizerName}
+                        </div>
+                        <div style={{ color: '#25D366', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '3px' }}>
+                          <Phone size={13} />
+                          <span>{b.organizerPhone}</span>
+                        </div>
+                      </div>
+
+                      {/* Required Card Guarantee Info */}
+                      <div style={{ background: 'rgba(11, 13, 18, 0.6)', padding: '0.8rem', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CreditCard size={14} />
+                          <span>{lang === 'ar' ? 'بطاقة الضمان المطلوبة:' : 'Required Card Guarantee:'}</span>
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700 }}>
+                          {b.cardDetails?.cardBrand || 'Card'} {b.cardDetails?.cardNumberMasked || '•••• 4242'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '3px' }}>
+                          Exp: {b.cardDetails?.expiry || '12/28'} • {b.needCoalMasterAttendant ? '🔥 Attendant: Yes' : 'Attendant: No'}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Card Actions Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem', paddingTop: '0.8rem', borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {lang === 'ar' ? 'سُجل في:' : 'Booked on:'} {b.createdAt || 'Recent'}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        {/* 1. Open Customer WhatsApp Confirmation */}
+                        <a
+                          href={getWhatsAppUrl(b.organizerPhone, formatUserPartyWhatsAppMessage(b, lang))}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                            color: '#fff',
+                            textDecoration: 'none',
+                            padding: '0.45rem 0.9rem',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem'
+                          }}
+                        >
+                          <Send size={13} />
+                          <span>{lang === 'ar' ? 'واتساب العميل' : 'WhatsApp Customer'}</span>
+                          <ExternalLink size={12} />
+                        </a>
+
+                        {/* 3. Send WhatsApp Alert to Admin */}
+                        <a
+                          href={getWhatsAppUrl(adminWhatsAppPhone, formatAdminPartyWhatsAppMessage(b))}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: 'rgba(212, 175, 55, 0.15)',
+                            border: '1px solid var(--border-gold)',
+                            color: 'var(--accent-gold-light)',
+                            textDecoration: 'none',
+                            padding: '0.45rem 0.9rem',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem'
+                          }}
+                        >
+                          <ShieldCheck size={14} color="var(--accent-gold)" />
+                          <span>{lang === 'ar' ? 'إشعار واتساب الإدارة' : 'Notify Admin WhatsApp'}</span>
+                          <ExternalLink size={12} />
+                        </a>
+
+                        {/* Cancel / Delete Booking Button */}
+                        <button
+                          type="button"
+                          title={lang === 'ar' ? 'إلغاء وحذف الحجز مع إشعار الطرفين عبر الواتساب' : 'Cancel & delete party booking with WhatsApp notifications for both'}
+                          onClick={() => setPartyToCancelModal(b)}
+                          style={{
+                            background: 'rgba(230, 57, 70, 0.15)',
+                            border: '1px solid rgba(230, 57, 70, 0.3)',
+                            color: '#e63946',
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          <span>{lang === 'ar' ? 'إلغاء / حذف' : 'Cancel / Delete'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PARTY CANCELLATION & WHATSAPP NOTIFICATION MODAL */}
+      {partyToCancelModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(5, 7, 10, 0.88)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 1200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '560px',
+            width: '100%',
+            padding: '2rem',
+            position: 'relative',
+            boxShadow: 'var(--shadow-card)',
+            maxHeight: '92vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(230, 57, 70, 0.4)'
+          }}>
+            {/* Header with Alert Icon */}
+            <div style={{ textAlign: 'center', marginBottom: '1.4rem' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(230, 57, 70, 0.25), rgba(230, 57, 70, 0.1))',
+                border: '2px solid #e63946',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0.8rem',
+                boxShadow: '0 0 20px rgba(230, 57, 70, 0.3)'
+              }}>
+                <AlertTriangle size={34} color="#e63946" />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.4rem', color: '#fff' }}>
+                {lang === 'ar' ? 'إلغاء حجز الحفلة وإشعار الطرفين عبر الواتساب' : 'Cancel Party Booking & Notify Both via WhatsApp'}
+              </h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                {lang === 'ar'
+                  ? 'عند تأكيد الإلغاء، سيتم فك حجز معدات الشيشة وإرسال إشعار الإلغاء الرسمي لكل من العميل والإدارة عبر الواتساب.'
+                  : 'Canceling will release hookah pots inventory and send official WhatsApp cancellation notices to both customer and admin.'}
+              </p>
+            </div>
+
+            {/* Booking Details Summary */}
+            <div style={{ background: 'rgba(11, 13, 18, 0.85)', padding: '1.1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '1.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', paddingBottom: '0.6rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontWeight: 800, color: 'var(--accent-gold)', fontSize: '1.05rem' }}>
+                  {partyToCancelModal.bookingCode}
+                </span>
+                <span style={{ fontWeight: 800, color: '#e63946', fontSize: '0.85rem', background: 'rgba(230,57,70,0.15)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
+                  {lang === 'ar' ? 'سيتم الإلغاء' : 'Will be Cancelled'}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.7rem', fontSize: '0.85rem', marginBottom: '0.6rem' }}>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>{lang === 'ar' ? 'الحزمة:' : 'Package:'}</span>
+                  <strong style={{ color: '#fff' }}>{lang === 'ar' ? partyToCancelModal.packageNameAr : partyToCancelModal.packageNameEn}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>{lang === 'ar' ? 'عدد الشيشات:' : 'Pots:'}</span>
+                  <strong style={{ color: '#fff' }}>{partyToCancelModal.potsCount} Pots</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>{lang === 'ar' ? 'الموعد المحدد:' : 'Scheduled Date & Time:'}</span>
+                  <strong style={{ color: 'var(--accent-gold)' }}>{partyToCancelModal.eventDate} @ {partyToCancelModal.eventTime}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>{lang === 'ar' ? 'المنظم:' : 'Organizer:'}</span>
+                  <strong style={{ color: '#fff' }}>{partyToCancelModal.organizerName}</strong>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{partyToCancelModal.eventLocation}</span>
+                <span style={{ color: '#2a9d8f', fontWeight: 600 }}>Card Guarantee Released • ₹0 Charged</span>
+              </div>
+            </div>
+
+            {/* TWO DIRECT WHATSAPP BUTTONS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.4rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.1rem' }}>
+                {lang === 'ar' ? 'روابط إشعارات الواتساب المباشرة للطرفين:' : 'Direct WhatsApp Cancellation Links (Both Parties):'}
+              </div>
+
+              {/* 1. Customer WhatsApp Cancellation */}
+              <a
+                href={getWhatsAppUrl(partyToCancelModal.organizerPhone, formatUserPartyCancellationWhatsAppMessage(partyToCancelModal, lang))}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                  color: '#ffffff',
+                  padding: '0.8rem 1.1rem',
+                  borderRadius: 'var(--radius-md)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  boxShadow: '0 3px 12px rgba(37, 211, 102, 0.3)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Send size={16} />
+                  <span>{lang === 'ar' ? `1. إشعار العميل بالإلغاء عبر واتساب (${partyToCancelModal.organizerPhone})` : `1. Send Cancellation WhatsApp to Customer (${partyToCancelModal.organizerPhone})`}</span>
+                </div>
+                <ExternalLink size={14} />
+              </a>
+
+              {/* 2. Admin WhatsApp Cancellation */}
+              <a
+                href={getWhatsAppUrl(adminWhatsAppPhone, formatAdminPartyCancellationWhatsAppMessage(partyToCancelModal))}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid var(--border-gold)',
+                  color: 'var(--accent-gold-light)',
+                  padding: '0.8rem 1.1rem',
+                  borderRadius: 'var(--radius-md)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontWeight: 700,
+                  fontSize: '0.9rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck size={16} color="var(--accent-gold)" />
+                  <span>{lang === 'ar' ? `2. إشعار الإدارة بالإلغاء عبر واتساب (+${adminWhatsAppPhone})` : `2. Send Cancellation WhatsApp to Admin (+${adminWhatsAppPhone})`}</span>
+                </div>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+
+            {/* ACTION CONFIRMATION BUTTONS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <button
+                type="button"
+                id="confirm-cancel-and-notify-both-btn"
+                onClick={() => {
+                  // 1. Open customer WhatsApp cancellation message
+                  openWhatsApp(partyToCancelModal.organizerPhone, formatUserPartyCancellationWhatsAppMessage(partyToCancelModal, lang));
+                  // 2. Open admin WhatsApp cancellation dispatch
+                  try {
+                    openWhatsApp(adminWhatsAppPhone, formatAdminPartyCancellationWhatsAppMessage(partyToCancelModal));
+                  } catch (e) {
+                    console.warn('Admin whatsapp popup blocked or failed', e);
+                  }
+                  // 3. Delete / remove booking from roster
+                  deletePartyBooking(partyToCancelModal.bookingCode);
+                  // 4. Feedback
+                  showToast(
+                    lang === 'ar'
+                      ? `تم إلغاء وحذف الحجز ${partyToCancelModal.bookingCode} وإرسال إشعار الواتساب للطرفين`
+                      : `Booking ${partyToCancelModal.bookingCode} canceled! WhatsApp notifications sent to both customer and admin.`,
+                    'info'
+                  );
+                  setPartyToCancelModal(null);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #e63946, #b02a37)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '0.85rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 15px rgba(230, 57, 70, 0.35)'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>{lang === 'ar' ? 'تأكيد الإلغاء والحذف وإرسال واتساب للطرفين' : 'Confirm Cancellation & Remove (Notify Both)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  // Mark as Cancelled in the roster rather than deleting completely
+                  openWhatsApp(partyToCancelModal.organizerPhone, formatUserPartyCancellationWhatsAppMessage(partyToCancelModal, lang));
+                  try {
+                    openWhatsApp(adminWhatsAppPhone, formatAdminPartyCancellationWhatsAppMessage(partyToCancelModal));
+                  } catch (e) {
+                    console.warn('Admin whatsapp popup blocked or failed', e);
+                  }
+                  updatePartyBookingStatus(partyToCancelModal.bookingCode, 'Cancelled');
+                  showToast(
+                    lang === 'ar'
+                      ? `تم تعيين الحجز ${partyToCancelModal.bookingCode} كملغى وإرسال إشعار الواتساب للطرفين`
+                      : `Booking ${partyToCancelModal.bookingCode} marked as Cancelled & both parties notified via WhatsApp!`,
+                    'info'
+                  );
+                  setPartyToCancelModal(null);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-main)',
+                  padding: '0.7rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <span>{lang === 'ar' ? 'إلغاء الحجز مع الاحتفاظ به كـ "ملغى" في السجل' : 'Mark as "Cancelled" (Keep in Roster Records)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPartyToCancelModal(null)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  marginTop: '0.2rem'
+                }}
+              >
+                {lang === 'ar' ? 'تراجع / الإبقاء على الحجز' : 'Keep Booking (Abort)'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* CLOUDINARY SETTINGS TAB */}
       {activeAdminTab === 'settings' && (
@@ -435,6 +1353,80 @@ export const AdminManager = () => {
               <span>{lang === 'ar' ? 'حفظ إعدادات كلوديناري' : 'Save Cloudinary Credentials'}</span>
             </button>
           </form>
+
+          {/* Admin WhatsApp Phone Notification Setup */}
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Phone size={18} color="#25D366" />
+              <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>
+                {lang === 'ar' ? 'رقم هاتف الواتساب لإشعارات الإدارة' : 'Admin WhatsApp Notification Phone'}
+              </h4>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              {lang === 'ar'
+                ? 'الرقم الذي يستلم إشعارات وتنبيهات حجز حفلات الشيشة فوراً مع تفاصيل المنظمين والبطاقات وتاريخ ووقت الحفلة.'
+                : 'The admin phone number that receives instant WhatsApp party catering alerts, organizer contacts, card guarantee statuses, and schedule details.'}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+              <input
+                type="tel"
+                value={adminPhoneInput}
+                onChange={(e) => setAdminPhoneInput(e.target.value)}
+                placeholder="e.g. 919960154761"
+                style={{
+                  flex: 1,
+                  minWidth: '220px',
+                  padding: '0.7rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(0,0,0,0.5)',
+                  border: '1px solid var(--border-gold)',
+                  color: '#fff',
+                  fontSize: '0.95rem'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const cleaned = adminPhoneInput.replace(/[^\d+]/g, '');
+                  setAdminWhatsAppPhone(cleaned);
+                  showToast(
+                    lang === 'ar' ? 'تم حفظ رقم هاتف الإدارة بنجاح!' : 'Admin WhatsApp phone saved successfully!',
+                    'success'
+                  );
+                }}
+                className="btn-gold"
+                style={{ padding: '0.7rem 1.4rem', fontSize: '0.9rem' }}
+              >
+                <Save size={16} />
+                <span>{lang === 'ar' ? 'حفظ رقم الإدارة' : 'Save Admin Phone'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const msg = `🔔 *ARABIC SHISHA TEST NOTIFICATION*\nWhatsApp notifications configured successfully for Admin (+${adminPhoneInput}). Ready to receive new party catering bookings!`;
+                  openWhatsApp(adminPhoneInput, msg);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.7rem 1.2rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <Send size={15} />
+                <span>{lang === 'ar' ? 'اختبار الإشعار' : 'Test Alert'}</span>
+              </button>
+            </div>
+          </div>
 
           {/* Cloudinary Setup Help Box */}
           <div
