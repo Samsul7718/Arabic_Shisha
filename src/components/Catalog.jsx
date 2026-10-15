@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { SHISHA_ITEMS, SHISHA_CATEGORIES, BRANDS_LIST } from '../data/shishaData';
 import { Search, Filter, Star, CheckCircle, AlertTriangle, XCircle, Plus, Info, Tag } from 'lucide-react';
@@ -19,6 +19,17 @@ export const Catalog = () => {
   } = useApp();
 
   const [selectedBrand, setSelectedBrand] = useState('All Brands');
+
+  // Dynamically include brands from code and custom added products
+  const dynamicBrandsList = useMemo(() => {
+    const brands = new Set(BRANDS_LIST);
+    shishaItems.forEach((item) => {
+      if (item.brand && item.brand.trim()) {
+        brands.add(item.brand.trim());
+      }
+    });
+    return Array.from(brands);
+  }, [shishaItems]);
 
   // Filtering Logic
   const filteredItems = shishaItems.filter((item) => {
@@ -88,7 +99,7 @@ export const Catalog = () => {
                 cursor: 'pointer'
               }}
             >
-              {BRANDS_LIST.map((b) => (
+              {dynamicBrandsList.map((b) => (
                 <option key={b} value={b}>
                   {b === 'All Brands' ? (lang === 'ar' ? 'جميع الماركات' : 'All Brands') : b}
                 </option>
@@ -148,13 +159,13 @@ export const Catalog = () => {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-          {filteredItems.map((item) => {
+          {filteredItems.map((item, idx) => {
             const isOutOfStock = item.stockStatus === 'out_of_stock';
             const isLowStock = item.stockStatus === 'low_stock';
 
             return (
               <div
-                key={item.id}
+                key={item.id ? `${item.id}-${idx}` : `item-${idx}`}
                 className="glass-panel card-hover-effect"
                 style={{
                   display: 'flex',

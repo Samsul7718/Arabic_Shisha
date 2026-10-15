@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, uploadImageWithFallback } from '../utils/cloudinary';
 import { formatCurrency } from '../utils/helpers';
 import { ProductCardImage } from './ProductCardImage';
 import {
@@ -36,7 +36,11 @@ import {
   CreditCard,
   Send,
   ExternalLink,
-  Filter
+  Filter,
+  Loader2,
+  X,
+  Sliders,
+  Check
 } from 'lucide-react';
 
 export const AdminManager = () => {
@@ -53,6 +57,7 @@ export const AdminManager = () => {
     setCloudinaryConfig,
     showToast,
     resetInventory,
+    deleteProduct,
     partyBookings,
     updatePartyBookingStatus,
     deletePartyBooking,
@@ -78,6 +83,9 @@ export const AdminManager = () => {
 
   // State for Party Cancellation & WhatsApp Notification Modal
   const [partyToCancelModal, setPartyToCancelModal] = useState(null);
+
+  // State for Modifying Product / Rental Details Modal
+  const [editingItemModal, setEditingItemModal] = useState(null);
 
   const handlePackagePriceChange = (pkgId, val) => {
     setPackagePricesDraft((prev) => ({ ...prev, [pkgId]: val }));
@@ -129,73 +137,171 @@ export const AdminManager = () => {
     );
   };
 
-  // Upload image to Cloudinary for a specific item (supports field 'image' or 'secondaryImage')
+  // Upload image for a specific item (supports field 'image' or 'secondaryImage')
+  // Automatically uploads to Cloudinary or falls back to local compressed image so ANY image upload succeeds
   const handleItemImageUpload = async (itemId, file, isRental = false, field = 'image') => {
-    if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
-      showToast(
-        lang === 'ar'
-          ? 'يرجى ضبط اسم حساب كلوديناري والـ Upload Preset في تبويب الإعدادات أولاً!'
-          : 'Please configure your Cloud Name and Upload Preset in Cloudinary Settings first!',
-        'error'
-      );
-      setActiveAdminTab('settings');
-      return;
-    }
+    if (!file) return;
 
     const stateKey = `${itemId}_${field}`;
     setUploadingState((prev) => ({ ...prev, [stateKey]: true }));
 
-    const res = await uploadToCloudinary(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
+    const res = await uploadImageWithFallback(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
 
     setUploadingState((prev) => ({ ...prev, [stateKey]: false }));
 
     if (res.success && res.url) {
       if (isRental) {
         setRentalPots((prev) =>
-          prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: res.url } : pot))
+          prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: res.url, customImage: true } : pot))
         );
       } else {
         setShishaItems((prev) =>
-          prev.map((item) => (item.id === itemId ? { ...item, [field]: res.url } : item))
+          prev.map((item) => (item.id === itemId ? { ...item, [field]: res.url, customImage: true } : item))
         );
       }
-      showToast(
-        lang === 'ar' ? 'تم رفع الصورة بنجاح إلى كلوديناري!' : 'Image uploaded to Cloudinary successfully!',
-        'success'
-      );
+      if (res.provider === 'cloudinary') {
+        showToast(
+          lang === 'ar' ? 'تم رفع الصورة بنجاح إلى كلوديناري!' : 'Image uploaded to Cloudinary successfully!',
+          'success'
+        );
+      } else {
+        showToast(
+          lang === 'ar' ? 'تم حفظ وتحديث الصورة بنجاح!' : 'Image processed & saved successfully!',
+          'success'
+        );
+      }
     } else {
-      showToast(res.error || 'Failed to upload image', 'error');
+      showToast(res.error || 'Failed to process image', 'error');
     }
   };
 
   // Upload image for New Item Form
   const handleNewItemImageUpload = async (file, field = 'image') => {
-    if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
-      showToast(
-        lang === 'ar'
-          ? 'يرجى ضبط إعدادات كلوديناري أولاً!'
-          : 'Please configure Cloudinary settings first!',
-        'error'
-      );
-      return;
-    }
+    if (!file) return;
 
     const stateKey = `new_item_${field}`;
     setUploadingState((prev) => ({ ...prev, [stateKey]: true }));
 
-    const res = await uploadToCloudinary(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
+    const res = await uploadImageWithFallback(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
 
     setUploadingState((prev) => ({ ...prev, [stateKey]: false }));
 
     if (res.success && res.url) {
       setNewItem((prev) => ({ ...prev, [field]: res.url }));
-      showToast(
-        lang === 'ar' ? 'تم رفع صورة المنتج الجديد إلى كلوديناري!' : 'New product image uploaded to Cloudinary!',
-        'success'
+      if (res.provider === 'cloudinary') {
+        showToast(
+          lang === 'ar' ? 'تم رفع صورة المنتج الجديد إلى كلوديناري!' : 'New product image uploaded to Cloudinary!',
+          'success'
+        );
+      } else {
+        showToast(
+          lang === 'ar' ? 'تم حفظ صورة المنتج الجديد بنجاح!' : 'New product image saved successfully!',
+          'success'
+        );
+      }
+    } else {
+      showToast(res.error || 'Failed to process image', 'error');
+    }
+  };
+
+  // Upload image inside Edit Modal
+  const handleEditModalImageUpload = async (file, field = 'image') => {
+    if (!file || !editingItemModal) return;
+
+    const stateKey = `edit_modal_${field}`;
+    setUploadingState((prev) => ({ ...prev, [stateKey]: true }));
+
+    const res = await uploadImageWithFallback(file, cloudinaryConfig.cloudName, cloudinaryConfig.uploadPreset);
+
+    setUploadingState((prev) => ({ ...prev, [stateKey]: false }));
+
+    if (res.success && res.url) {
+      setEditingItemModal((prev) => ({ ...prev, [field]: res.url }));
+      if (res.provider === 'cloudinary') {
+        showToast(
+          lang === 'ar' ? 'تم رفع الصورة بنجاح إلى كلوديناري!' : 'Image uploaded to Cloudinary successfully!',
+          'success'
+        );
+      } else {
+        showToast(
+          lang === 'ar' ? 'تم حفظ الصورة بنجاح!' : 'Image processed & updated successfully!',
+          'success'
+        );
+      }
+    } else {
+      showToast(res.error || 'Failed to process image', 'error');
+    }
+  };
+
+  // Save modified product / rental details
+  const handleSaveEditedItem = (e) => {
+    e.preventDefault();
+    if (!editingItemModal) return;
+
+    if (!editingItemModal.nameEn) {
+      showToast(lang === 'ar' ? 'يرجى إدخال اسم المنتج' : 'Please provide product name', 'error');
+      return;
+    }
+
+    if (editingItemModal.isRental) {
+      const dailyRate = parseFloat(editingItemModal.dailyRate) || 0;
+      const deposit = parseFloat(editingItemModal.deposit) || 0;
+      setRentalPots((prev) =>
+        prev.map((pot) =>
+          pot.id === editingItemModal.id
+            ? {
+                ...pot,
+                adminEdited: true,
+                nameEn: editingItemModal.nameEn,
+                nameAr: editingItemModal.nameAr || editingItemModal.nameEn,
+                brand: editingItemModal.brand || 'Luxury',
+                dailyRate,
+                deposit,
+                inStock: editingItemModal.inStock !== false,
+                descriptionEn: editingItemModal.descriptionEn || '',
+                descriptionAr: editingItemModal.descriptionAr || '',
+                image: editingItemModal.image || pot.image,
+                secondaryImage: editingItemModal.secondaryImage || pot.secondaryImage,
+                customImage: editingItemModal.image !== pot.image || pot.customImage
+              }
+            : pot
+        )
       );
     } else {
-      showToast(res.error || 'Failed to upload image', 'error');
+      const price = parseFloat(editingItemModal.price) || 0;
+      const stockQty = parseInt(editingItemModal.stockQty, 10) || 0;
+      setShishaItems((prev) =>
+        prev.map((item) =>
+          item.id === editingItemModal.id
+            ? {
+                ...item,
+                adminEdited: true,
+                nameEn: editingItemModal.nameEn,
+                nameAr: editingItemModal.nameAr || editingItemModal.nameEn,
+                brand: editingItemModal.brand || 'General',
+                category: editingItemModal.category || item.category,
+                price,
+                stockStatus: editingItemModal.stockStatus || item.stockStatus,
+                stockQty,
+                strength: editingItemModal.strength || item.strength || 'N/A',
+                profile: editingItemModal.profile || item.profile || 'General',
+                badge: editingItemModal.badge || '',
+                descriptionEn: editingItemModal.descriptionEn || '',
+                descriptionAr: editingItemModal.descriptionAr || '',
+                image: editingItemModal.image || item.image,
+                secondaryImage: editingItemModal.secondaryImage || item.secondaryImage,
+                customImage: editingItemModal.image !== item.image || item.customImage
+              }
+            : item
+        )
+      );
     }
+
+    showToast(
+      lang === 'ar' ? 'تم حفظ تعديلات المنتج بنجاح!' : 'Product details modified successfully!',
+      'success'
+    );
+    setEditingItemModal(null);
   };
 
   // Toggle Stock Status
@@ -233,11 +339,11 @@ export const AdminManager = () => {
   const updateImageUrl = (itemId, newUrl, isRental = false, field = 'image') => {
     if (isRental) {
       setRentalPots((prev) =>
-        prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: newUrl } : pot))
+        prev.map((pot) => (pot.id === itemId ? { ...pot, [field]: newUrl, customImage: true } : pot))
       );
     } else {
       setShishaItems((prev) =>
-        prev.map((item) => (item.id === itemId ? { ...item, [field]: newUrl } : item))
+        prev.map((item) => (item.id === itemId ? { ...item, [field]: newUrl, customImage: true } : item))
       );
     }
   };
@@ -245,12 +351,7 @@ export const AdminManager = () => {
   // Delete Item
   const handleDeleteItem = (itemId, isRental = false) => {
     if (window.confirm(lang === 'ar' ? 'هل أنت تأكد من حذف هذا المنتج؟' : 'Are you sure you want to delete this item?')) {
-      if (isRental) {
-        setRentalPots((prev) => prev.filter((pot) => pot.id !== itemId));
-      } else {
-        setShishaItems((prev) => prev.filter((item) => item.id !== itemId));
-      }
-      showToast(lang === 'ar' ? 'تم حذف المنتج بنجاح' : 'Item deleted', 'info');
+      deleteProduct(itemId, isRental);
     }
   };
 
@@ -262,24 +363,49 @@ export const AdminManager = () => {
       return;
     }
 
-    const createdItem = {
-      id: `custom_${Date.now()}`,
-      category: newItem.category,
-      brand: newItem.brand,
-      nameEn: newItem.nameEn,
-      nameAr: newItem.nameAr || newItem.nameEn,
-      descriptionEn: newItem.descriptionEn || 'Original premium product.',
-      descriptionAr: newItem.descriptionAr || 'منتج أصلي فاخر.',
-      price: parseFloat(newItem.price),
-      rating: 5.0,
-      stockStatus: newItem.stockStatus,
-      stockQty: newItem.stockStatus === 'in_stock' ? 20 : 0,
-      badge: 'New Arrival',
-      image: newItem.image || 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
-      secondaryImage: newItem.secondaryImage || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80'
-    };
+    const priceNum = parseFloat(newItem.price) || 0;
 
-    setShishaItems((prev) => [createdItem, ...prev]);
+    if (newItem.category === 'rentals') {
+      const createdPot = {
+        id: `rent_${Date.now()}`,
+        isCustom: true,
+        brand: newItem.brand || 'Luxury',
+        nameEn: newItem.nameEn,
+        nameAr: newItem.nameAr || newItem.nameEn,
+        dailyRate: priceNum,
+        deposit: priceNum * 4,
+        descriptionEn: newItem.descriptionEn || 'High-end luxury hookah pot for rental.',
+        descriptionAr: newItem.descriptionAr || 'شيشة فاخرة للإيجار اليومي مع كافة الملحقات.',
+        image: newItem.image || 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+        secondaryImage: newItem.secondaryImage || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
+        inStock: newItem.stockStatus !== 'out_of_stock',
+        customImage: !!newItem.image
+      };
+      setRentalPots((prev) => [createdPot, ...prev]);
+      setActiveAdminTab('rentals');
+    } else {
+      const createdItem = {
+        id: `custom_${Date.now()}`,
+        isCustom: true,
+        category: newItem.category,
+        brand: newItem.brand || 'Custom',
+        nameEn: newItem.nameEn,
+        nameAr: newItem.nameAr || newItem.nameEn,
+        descriptionEn: newItem.descriptionEn || 'Original premium product.',
+        descriptionAr: newItem.descriptionAr || 'منتج أصلي فاخر.',
+        price: priceNum,
+        rating: 5.0,
+        stockStatus: newItem.stockStatus,
+        stockQty: newItem.stockStatus === 'in_stock' ? 20 : 0,
+        badge: 'New Arrival',
+        image: newItem.image || 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=600&q=80',
+        secondaryImage: newItem.secondaryImage || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80',
+        customImage: !!newItem.image
+      };
+      setShishaItems((prev) => [createdItem, ...prev]);
+      setActiveAdminTab('catalog');
+    }
+
     showToast(lang === 'ar' ? 'تمت إضافة المنتج الجديد بنجاح!' : 'New product added successfully!', 'success');
     
     // Reset form
@@ -295,8 +421,6 @@ export const AdminManager = () => {
       image: '',
       secondaryImage: ''
     });
-
-    setActiveAdminTab('catalog');
   };
 
   const filteredCatalog = shishaItems.filter((item) => {
@@ -1505,8 +1629,8 @@ export const AdminManager = () => {
 
           {/* Item Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.2rem' }}>
-            {filteredCatalog.map((item) => (
-              <div key={item.id} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {filteredCatalog.map((item, idx) => (
+              <div key={item.id ? `${item.id}_${idx}` : `item_${idx}`} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 
                 {/* Interactive Card Image Slider Preview */}
                 <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '0.8rem' }}>
@@ -1605,15 +1729,20 @@ export const AdminManager = () => {
                           border: '1px solid var(--border-gold)',
                           borderRadius: 'var(--radius-sm)',
                           padding: '0.3rem 0.5rem',
-                          cursor: 'pointer',
+                          cursor: uploadingState[`${item.id}_image`] ? 'wait' : 'pointer',
                           display: 'flex',
                           alignItems: 'center'
                         }}
                       >
-                        <Upload size={13} color="var(--accent-gold)" />
+                        {uploadingState[`${item.id}_image`] ? (
+                          <Loader2 size={13} className="spin" color="var(--accent-gold)" />
+                        ) : (
+                          <Upload size={13} color="var(--accent-gold)" />
+                        )}
                         <input
                           type="file"
                           accept="image/*"
+                          disabled={uploadingState[`${item.id}_image`]}
                           style={{ display: 'none' }}
                           onChange={(e) => {
                             if (e.target.files && e.target.files[0]) {
@@ -1649,15 +1778,20 @@ export const AdminManager = () => {
                           border: '1px solid var(--border-gold)',
                           borderRadius: 'var(--radius-sm)',
                           padding: '0.3rem 0.5rem',
-                          cursor: 'pointer',
+                          cursor: uploadingState[`${item.id}_secondaryImage`] ? 'wait' : 'pointer',
                           display: 'flex',
                           alignItems: 'center'
                         }}
                       >
-                        <Upload size={13} color="var(--accent-gold)" />
+                        {uploadingState[`${item.id}_secondaryImage`] ? (
+                          <Loader2 size={13} className="spin" color="var(--accent-gold)" />
+                        ) : (
+                          <Upload size={13} color="var(--accent-gold)" />
+                        )}
                         <input
                           type="file"
                           accept="image/*"
+                          disabled={uploadingState[`${item.id}_secondaryImage`]}
                           style={{ display: 'none' }}
                           onChange={(e) => {
                             if (e.target.files && e.target.files[0]) {
@@ -1668,7 +1802,24 @@ export const AdminManager = () => {
                       </label>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
+                      <button
+                        onClick={() => setEditingItemModal({ ...item, isRental: false })}
+                        title={lang === 'ar' ? 'تعديل تفاصيل المنتج' : 'Edit Product Details'}
+                        className="btn-gold"
+                        style={{
+                          padding: '0.28rem 0.65rem',
+                          fontSize: '0.74rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          borderRadius: 'var(--radius-sm)'
+                        }}
+                      >
+                        <Edit size={12} />
+                        <span>{lang === 'ar' ? 'تعديل التفاصيل' : 'Edit Details'}</span>
+                      </button>
+
                       <button
                         onClick={() => handleDeleteItem(item.id, false)}
                         title={lang === 'ar' ? 'حذف المنتج' : 'Delete item'}
@@ -1677,15 +1828,15 @@ export const AdminManager = () => {
                           border: '1px solid rgba(230, 57, 70, 0.4)',
                           color: '#e63946',
                           borderRadius: 'var(--radius-sm)',
-                          padding: '0.25rem 0.6rem',
-                          fontSize: '0.75rem',
+                          padding: '0.28rem 0.6rem',
+                          fontSize: '0.74rem',
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.3rem'
                         }}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                         <span>{lang === 'ar' ? 'حذف' : 'Delete'}</span>
                       </button>
                     </div>
@@ -1701,8 +1852,8 @@ export const AdminManager = () => {
       {/* RENTAL POTS TAB */}
       {activeAdminTab === 'rentals' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.2rem' }}>
-          {rentalPots.map((pot) => (
-            <div key={pot.id} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {rentalPots.map((pot, idx) => (
+            <div key={pot.id ? `${pot.id}_${idx}` : `pot_${idx}`} className="glass-panel product-card" style={{ padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               
               {/* Interactive Sliding Card Image Preview */}
               <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '0.8rem' }}>
@@ -1777,15 +1928,20 @@ export const AdminManager = () => {
                         border: '1px solid var(--border-gold)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '0.3rem 0.5rem',
-                        cursor: 'pointer',
+                        cursor: uploadingState[`${pot.id}_image`] ? 'wait' : 'pointer',
                         display: 'flex',
                         alignItems: 'center'
                       }}
                     >
-                      <Upload size={13} color="var(--accent-gold)" />
+                      {uploadingState[`${pot.id}_image`] ? (
+                        <Loader2 size={13} className="spin" color="var(--accent-gold)" />
+                      ) : (
+                        <Upload size={13} color="var(--accent-gold)" />
+                      )}
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingState[`${pot.id}_image`]}
                         style={{ display: 'none' }}
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
@@ -1821,15 +1977,20 @@ export const AdminManager = () => {
                         border: '1px solid var(--border-gold)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '0.3rem 0.5rem',
-                        cursor: 'pointer',
+                        cursor: uploadingState[`${pot.id}_secondaryImage`] ? 'wait' : 'pointer',
                         display: 'flex',
                         alignItems: 'center'
                       }}
                     >
-                      <Upload size={13} color="var(--accent-gold)" />
+                      {uploadingState[`${pot.id}_secondaryImage`] ? (
+                        <Loader2 size={13} className="spin" color="var(--accent-gold)" />
+                      ) : (
+                        <Upload size={13} color="var(--accent-gold)" />
+                      )}
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingState[`${pot.id}_secondaryImage`]}
                         style={{ display: 'none' }}
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
@@ -1840,7 +2001,24 @@ export const AdminManager = () => {
                     </label>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
+                    <button
+                      onClick={() => setEditingItemModal({ ...pot, isRental: true })}
+                      title={lang === 'ar' ? 'تعديل تفاصيل الشيشة' : 'Edit Rental Details'}
+                      className="btn-gold"
+                      style={{
+                        padding: '0.28rem 0.65rem',
+                        fontSize: '0.74rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      <Edit size={12} />
+                      <span>{lang === 'ar' ? 'تعديل التفاصيل' : 'Edit Details'}</span>
+                    </button>
+
                     <button
                       onClick={() => handleDeleteItem(pot.id, true)}
                       title={lang === 'ar' ? 'حذف المنتج' : 'Delete item'}
@@ -1849,15 +2027,15 @@ export const AdminManager = () => {
                         border: '1px solid rgba(230, 57, 70, 0.4)',
                         color: '#e63946',
                         borderRadius: 'var(--radius-sm)',
-                        padding: '0.25rem 0.6rem',
-                        fontSize: '0.75rem',
+                        padding: '0.28rem 0.6rem',
+                        fontSize: '0.74rem',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.3rem'
                       }}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                       <span>{lang === 'ar' ? 'حذف' : 'Delete'}</span>
                     </button>
                   </div>
@@ -1962,6 +2140,7 @@ export const AdminManager = () => {
                   <option value="parlor">Parlor Lounge Service</option>
                   <option value="flavors">Flavor Packs</option>
                   <option value="coals">Charcoal & Accessories</option>
+                  <option value="rentals">Hookah Pot Rentals (تأجير شيشة)</option>
                 </select>
               </div>
 
@@ -2095,6 +2274,468 @@ export const AdminManager = () => {
               <span>{lang === 'ar' ? 'إضافة المنتج للمتجر الآن' : 'Publish Product to Shop'}</span>
             </button>
           </form>
+        </div>
+      )}
+
+      {/* EDIT PRODUCT / RENTAL DETAILS MODAL */}
+      {editingItemModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setEditingItemModal(null)}
+        >
+          <div
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '750px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: 'linear-gradient(145deg, #161a24, #0b0d12)',
+              border: '1px solid var(--border-gold)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.8rem',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', paddingBottom: '0.8rem', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Edit size={20} color="var(--accent-gold)" />
+                <h3 className="gold-gradient-text" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                  {lang === 'ar' ? 'تعديل تفاصيل المنتج' : 'Edit Product Details'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingItemModal(null)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  borderRadius: 'var(--radius-full)',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Name EN & AR */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Product Name (English) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingItemModal.nameEn || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, nameEn: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    اسم المنتج (بالعربية)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingItemModal.nameAr || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, nameAr: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Pricing, Brand & Category */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {editingItemModal.isRental ? 'Daily Rate (₹) *' : 'Price (₹) *'}
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={editingItemModal.isRental ? editingItemModal.dailyRate : editingItemModal.price}
+                    onChange={(e) =>
+                      setEditingItemModal({
+                        ...editingItemModal,
+                        [editingItemModal.isRental ? 'dailyRate' : 'price']: e.target.value
+                      })
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+
+                {editingItemModal.isRental && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      Deposit Amount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={editingItemModal.deposit || ''}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, deposit: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.6)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Brand
+                  </label>
+                  <input
+                    type="text"
+                    value={editingItemModal.brand || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, brand: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+
+                {!editingItemModal.isRental && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      Category
+                    </label>
+                    <select
+                      value={editingItemModal.category || 'flavors'}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, category: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.8)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    >
+                      <option value="flavors">Flavor Packs</option>
+                      <option value="coals">Charcoal & Supplies</option>
+                      <option value="pots">Hookah Pots (Sale)</option>
+                      <option value="parlor">Parlor Lounge Service</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Stock Status, Qty, Badge */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Stock Availability
+                  </label>
+                  {editingItemModal.isRental ? (
+                    <select
+                      value={editingItemModal.inStock !== false ? 'in_stock' : 'out_of_stock'}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, inStock: e.target.value === 'in_stock' })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.8)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    >
+                      <option value="in_stock">{lang === 'ar' ? 'متوفر للإيجار' : 'Available for Rent'}</option>
+                      <option value="out_of_stock">{lang === 'ar' ? 'غير متوفر حالياً' : 'Currently Rented / Unavailable'}</option>
+                    </select>
+                  ) : (
+                    <select
+                      value={editingItemModal.stockStatus || 'in_stock'}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, stockStatus: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.8)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    >
+                      <option value="in_stock">In Stock (متوفر)</option>
+                      <option value="low_stock">Low Stock (كمية قليلة)</option>
+                      <option value="out_of_stock">Out of Stock (غير متوفر)</option>
+                    </select>
+                  )}
+                </div>
+
+                {!editingItemModal.isRental && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      Stock Units Qty
+                    </label>
+                    <input
+                      type="number"
+                      value={editingItemModal.stockQty !== undefined ? editingItemModal.stockQty : 20}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, stockQty: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.6)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {!editingItemModal.isRental && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      Badge Tag
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItemModal.badge || ''}
+                      onChange={(e) => setEditingItemModal({ ...editingItemModal, badge: e.target.value })}
+                      placeholder="Best Seller, Quick Light, Natural..."
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(0,0,0,0.6)',
+                        border: '1px solid var(--border-gold)',
+                        color: '#fff'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Descriptions */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Description (English)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editingItemModal.descriptionEn || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, descriptionEn: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.3rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    الوصف (بالعربية)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editingItemModal.descriptionAr || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, descriptionAr: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Primary Image Upload & Preview */}
+              <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--accent-gold)' }}>
+                  Primary Image (الصورة الأساسية)
+                </label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {editingItemModal.image && (
+                    <img
+                      src={editingItemModal.image}
+                      alt="Primary Preview"
+                      style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-gold)' }}
+                    />
+                  )}
+                  <input
+                    type="text"
+                    value={editingItemModal.image || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, image: e.target.value })}
+                    placeholder="Paste image URL or upload below..."
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      padding: '0.6rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                  <label
+                    className="btn-gold"
+                    style={{
+                      padding: '0.6rem 0.9rem',
+                      fontSize: '0.82rem',
+                      cursor: uploadingState.edit_modal_image ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {uploadingState.edit_modal_image ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
+                    <span>{uploadingState.edit_modal_image ? 'Uploading...' : 'Upload Image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingState.edit_modal_image}
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleEditModalImageUpload(e.target.files[0], 'image');
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Secondary / Hover Image Upload & Preview */}
+              <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--accent-amber)' }}>
+                  Secondary / Hover Sliding Image (صورة التمرير التفاعلية)
+                </label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {editingItemModal.secondaryImage && (
+                    <img
+                      src={editingItemModal.secondaryImage}
+                      alt="Hover Preview"
+                      style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent-amber)' }}
+                    />
+                  )}
+                  <input
+                    type="text"
+                    value={editingItemModal.secondaryImage || ''}
+                    onChange={(e) => setEditingItemModal({ ...editingItemModal, secondaryImage: e.target.value })}
+                    placeholder="Paste hover image URL or upload below..."
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      padding: '0.6rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: '1px solid var(--border-gold)',
+                      color: '#fff'
+                    }}
+                  />
+                  <label
+                    className="btn-gold"
+                    style={{
+                      padding: '0.6rem 0.9rem',
+                      fontSize: '0.82rem',
+                      cursor: uploadingState.edit_modal_secondaryImage ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {uploadingState.edit_modal_secondaryImage ? <Loader2 size={15} className="spin" /> : <Upload size={15} />}
+                    <span>{uploadingState.edit_modal_secondaryImage ? 'Uploading...' : 'Upload Hover'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingState.edit_modal_secondaryImage}
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleEditModalImageUpload(e.target.files[0], 'secondaryImage');
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Modal Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.8rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingItemModal(null)}
+                  className="btn-glass"
+                  style={{ padding: '0.7rem 1.4rem', fontSize: '0.9rem' }}
+                >
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="btn-gold"
+                  style={{ padding: '0.7rem 1.8rem', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Save size={16} />
+                  <span>{lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

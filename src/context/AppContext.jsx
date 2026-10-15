@@ -3,6 +3,144 @@ import { SHISHA_ITEMS, RENTAL_POT_MODELS, PARTY_PACKAGES } from '../data/shishaD
 
 const AppContext = createContext();
 
+const getDeletedIds = (storageKey) => {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+};
+
+/**
+ * Intelligent Merger:
+ * Merges items defined statically in shishaData.js (SHISHA_ITEMS) with
+ * custom products added dynamically from Cloudinary/Admin and saved modifications.
+ * Both types of products will be preserved and displayed on the web page.
+ */
+export const mergeShishaItems = (codeItems = [], savedItems = [], deletedIds = new Set()) => {
+  const codeIdSet = new Set((codeItems || []).map((i) => i.id));
+  const savedItemMap = new Map();
+  const customItems = [];
+
+  if (Array.isArray(savedItems)) {
+    savedItems.forEach((item) => {
+      if (!item || !item.id || deletedIds.has(item.id)) return;
+
+      // Custom items created directly from Cloudinary / Admin Panel
+      if (item.isCustom || item.id.startsWith('custom_') || !codeIdSet.has(item.id)) {
+        customItems.push({ ...item, isCustom: true });
+      } else {
+        savedItemMap.set(item.id, item);
+      }
+    });
+  }
+
+  // Process code items from shishaData.js
+  const mergedCodeItems = (codeItems || [])
+    .filter((codeItem) => !deletedIds.has(codeItem.id))
+    .map((codeItem) => {
+      const savedOverride = savedItemMap.get(codeItem.id);
+      if (!savedOverride) {
+        // Newly added in shishaData.js (e.g. item_3, item_4)
+        return codeItem;
+      }
+
+      // Merge: keep code item base, but preserve admin modifications
+      return {
+        ...codeItem,
+        image: savedOverride.customImage || (savedOverride.image && savedOverride.image !== codeItem.image)
+          ? savedOverride.image
+          : codeItem.image,
+        secondaryImage: savedOverride.customImage || (savedOverride.secondaryImage && savedOverride.secondaryImage !== codeItem.secondaryImage)
+          ? savedOverride.secondaryImage
+          : codeItem.secondaryImage,
+        stockStatus: savedOverride.stockStatus !== undefined ? savedOverride.stockStatus : codeItem.stockStatus,
+        stockQty: savedOverride.stockQty !== undefined ? savedOverride.stockQty : codeItem.stockQty,
+        customImage: savedOverride.customImage || false,
+        ...(savedOverride.adminEdited ? {
+          nameEn: savedOverride.nameEn || codeItem.nameEn,
+          nameAr: savedOverride.nameAr || codeItem.nameAr,
+          price: savedOverride.price !== undefined ? savedOverride.price : codeItem.price,
+          descriptionEn: savedOverride.descriptionEn || codeItem.descriptionEn,
+          descriptionAr: savedOverride.descriptionAr || codeItem.descriptionAr,
+          brand: savedOverride.brand || codeItem.brand,
+          category: savedOverride.category || codeItem.category,
+          badge: savedOverride.badge !== undefined ? savedOverride.badge : codeItem.badge,
+          adminEdited: true
+        } : {})
+      };
+    });
+
+  // Ensure unique IDs
+  const seenIds = new Set();
+  const result = [];
+  for (const item of [...customItems, ...mergedCodeItems]) {
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
+      result.push(item);
+    }
+  }
+  return result;
+};
+
+export const mergeRentalPots = (codePots = [], savedPots = [], deletedIds = new Set()) => {
+  const codeIdSet = new Set((codePots || []).map((p) => p.id));
+  const savedPotMap = new Map();
+  const customPots = [];
+
+  if (Array.isArray(savedPots)) {
+    savedPots.forEach((pot) => {
+      if (!pot || !pot.id || deletedIds.has(pot.id)) return;
+
+      if (pot.isCustom || (pot.id.startsWith('rent_') && !codeIdSet.has(pot.id)) || !codeIdSet.has(pot.id)) {
+        customPots.push({ ...pot, isCustom: true });
+      } else {
+        savedPotMap.set(pot.id, pot);
+      }
+    });
+  }
+
+  const mergedCodePots = (codePots || [])
+    .filter((codePot) => !deletedIds.has(codePot.id))
+    .map((codePot) => {
+      const savedOverride = savedPotMap.get(codePot.id);
+      if (!savedOverride) return codePot;
+
+      return {
+        ...codePot,
+        image: savedOverride.customImage || (savedOverride.image && savedOverride.image !== codePot.image)
+          ? savedOverride.image
+          : codePot.image,
+        secondaryImage: savedOverride.customImage || (savedOverride.secondaryImage && savedOverride.secondaryImage !== codePot.secondaryImage)
+          ? savedOverride.secondaryImage
+          : codePot.secondaryImage,
+        inStock: savedOverride.inStock !== undefined ? savedOverride.inStock : codePot.inStock,
+        customImage: savedOverride.customImage || false,
+        ...(savedOverride.adminEdited ? {
+          nameEn: savedOverride.nameEn || codePot.nameEn,
+          nameAr: savedOverride.nameAr || codePot.nameAr,
+          brand: savedOverride.brand || codePot.brand,
+          dailyRate: savedOverride.dailyRate !== undefined ? savedOverride.dailyRate : codePot.dailyRate,
+          deposit: savedOverride.deposit !== undefined ? savedOverride.deposit : codePot.deposit,
+          descriptionEn: savedOverride.descriptionEn || codePot.descriptionEn,
+          descriptionAr: savedOverride.descriptionAr || codePot.descriptionAr,
+          adminEdited: true
+        } : {})
+      };
+    });
+
+  const seenIds = new Set();
+  const result = [];
+  for (const pot of [...customPots, ...mergedCodePots]) {
+    if (!seenIds.has(pot.id)) {
+      seenIds.add(pot.id);
+      result.push(pot);
+    }
+  }
+  return result;
+};
+
 export const AppProvider = ({ children }) => {
   const [lang, setLang] = useState('en'); // 'en' | 'ar'
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'rental' | 'party' | 'blender' | 'orders' | 'admin'
@@ -13,15 +151,29 @@ export const AppProvider = ({ children }) => {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('all');
 
-  // Dynamic Product & Image Inventory State (persisted in localStorage)
+  // Dynamic Product & Image Inventory State (Dual-Source: shishaData.js + Cloudinary/Admin)
   const [shishaItems, setShishaItems] = useState(() => {
-    const saved = localStorage.getItem('arabic_shisha_items');
-    return saved ? JSON.parse(saved) : SHISHA_ITEMS;
+    let saved = null;
+    try {
+      const raw = localStorage.getItem('arabic_shisha_items');
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to parse arabic_shisha_items from localStorage:', e);
+    }
+    const deletedIds = getDeletedIds('arabic_shisha_deleted_items');
+    return mergeShishaItems(SHISHA_ITEMS, saved, deletedIds);
   });
 
   const [rentalPots, setRentalPots] = useState(() => {
-    const saved = localStorage.getItem('arabic_shisha_rentals');
-    return saved ? JSON.parse(saved) : RENTAL_POT_MODELS;
+    let saved = null;
+    try {
+      const raw = localStorage.getItem('arabic_shisha_rentals');
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to parse arabic_shisha_rentals from localStorage:', e);
+    }
+    const deletedIds = getDeletedIds('arabic_shisha_deleted_rentals');
+    return mergeRentalPots(RENTAL_POT_MODELS, saved, deletedIds);
   });
 
   // Dynamic Party Packages & Pricing State (persisted in localStorage)
@@ -162,10 +314,47 @@ export const AppProvider = ({ children }) => {
     setLang((prev) => (prev === 'en' ? 'ar' : 'en'));
   };
 
+  // Synchronize when SHISHA_ITEMS from shishaData.js is modified or added
+  useEffect(() => {
+    const deletedIds = getDeletedIds('arabic_shisha_deleted_items');
+    setShishaItems((current) => mergeShishaItems(SHISHA_ITEMS, current, deletedIds));
+  }, [SHISHA_ITEMS]);
+
+  // Synchronize when RENTAL_POT_MODELS from shishaData.js is modified or added
+  useEffect(() => {
+    const deletedIds = getDeletedIds('arabic_shisha_deleted_rentals');
+    setRentalPots((current) => mergeRentalPots(RENTAL_POT_MODELS, current, deletedIds));
+  }, [RENTAL_POT_MODELS]);
+
+  const deleteProduct = (itemId, isRental = false) => {
+    if (isRental) {
+      setRentalPots((prev) => prev.filter((p) => p.id !== itemId));
+      try {
+        const deletedSet = getDeletedIds('arabic_shisha_deleted_rentals');
+        deletedSet.add(itemId);
+        localStorage.setItem('arabic_shisha_deleted_rentals', JSON.stringify([...deletedSet]));
+      } catch (e) {
+        console.error('Failed to save deleted rental id:', e);
+      }
+    } else {
+      setShishaItems((prev) => prev.filter((item) => item.id !== itemId));
+      try {
+        const deletedSet = getDeletedIds('arabic_shisha_deleted_items');
+        deletedSet.add(itemId);
+        localStorage.setItem('arabic_shisha_deleted_items', JSON.stringify([...deletedSet]));
+      } catch (e) {
+        console.error('Failed to save deleted product id:', e);
+      }
+    }
+    showToast(lang === 'ar' ? 'تم حذف المنتج بنجاح' : 'Product deleted successfully', 'info');
+  };
+
   const resetInventory = () => {
     localStorage.removeItem('arabic_shisha_items');
     localStorage.removeItem('arabic_shisha_rentals');
     localStorage.removeItem('arabic_shisha_party_packages');
+    localStorage.removeItem('arabic_shisha_deleted_items');
+    localStorage.removeItem('arabic_shisha_deleted_rentals');
     setShishaItems(SHISHA_ITEMS);
     setRentalPots(RENTAL_POT_MODELS);
     setPartyPackages(PARTY_PACKAGES);
@@ -330,6 +519,7 @@ export const AppProvider = ({ children }) => {
         cloudinaryConfig,
         setCloudinaryConfig,
         resetInventory,
+        deleteProduct,
         cart,
         addToCart,
         updateCartQty,
