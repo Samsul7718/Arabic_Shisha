@@ -383,6 +383,27 @@ export const AdminManager = () => {
       };
       setRentalPots((prev) => [createdPot, ...prev]);
       setActiveAdminTab('rentals');
+
+      // Automatically save directly to src/data/shishaData.js on disk
+      fetch('/api/save-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdPot)
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            showToast(
+              lang === 'ar'
+                ? 'تم حفظ المنتج الجديد تلقائياً في ملف shishaData.js!'
+                : 'Product automatically saved into shishaData.js!',
+              'success'
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn('Vite dev server /api/save-product not reachable:', err);
+        });
     } else {
       const createdItem = {
         id: `custom_${Date.now()}`,
@@ -404,6 +425,27 @@ export const AdminManager = () => {
       };
       setShishaItems((prev) => [createdItem, ...prev]);
       setActiveAdminTab('catalog');
+
+      // Automatically save directly to src/data/shishaData.js on disk
+      fetch('/api/save-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdItem)
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            showToast(
+              lang === 'ar'
+                ? 'تم حفظ المنتج الجديد تلقائياً في ملف shishaData.js!'
+                : 'Product automatically saved into shishaData.js!',
+              'success'
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn('Vite dev server /api/save-product not reachable:', err);
+        });
     }
 
     showToast(lang === 'ar' ? 'تمت إضافة المنتج الجديد بنجاح!' : 'New product added successfully!', 'success');
@@ -421,6 +463,35 @@ export const AdminManager = () => {
       image: '',
       secondaryImage: ''
     });
+  };
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Sync current inventory directly into shishaData.js
+  const handleSyncAllToShishaData = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/sync-all-to-shishadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: shishaItems })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          lang === 'ar'
+            ? `تم حفظ وتحديث كافة المنتجات (${data.count}) في shishaData.js بنجاح!`
+            : `All ${data.count} products synced directly into shishaData.js!`,
+          'success'
+        );
+      } else {
+        showToast(data.error || 'Failed to sync with shishaData.js', 'error');
+      }
+    } catch (err) {
+      showToast('Backend dev server sync API unreachable', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const filteredCatalog = shishaItems.filter((item) => {
@@ -1625,6 +1696,30 @@ export const AdminManager = () => {
               <option value="flavors">{lang === 'ar' ? 'علب النكهات' : 'Flavor Packs'}</option>
               <option value="coals">{lang === 'ar' ? 'فحم ومستلزمات' : 'Coals & Accessories'}</option>
             </select>
+
+            <button
+              onClick={handleSyncAllToShishaData}
+              disabled={isSyncing}
+              title="Saves all products directly to src/data/shishaData.js file on disk"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: 'linear-gradient(135deg, #d4af37, #ff9f1c)',
+                color: '#0b0d12',
+                border: 'none',
+                padding: '0.6rem 1.1rem',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: isSyncing ? 'not-allowed' : 'pointer',
+                boxShadow: 'var(--shadow-gold-glow)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {isSyncing ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
+              <span>{lang === 'ar' ? 'مزامنة مع shishaData.js' : 'Sync to shishaData.js'}</span>
+            </button>
           </div>
 
           {/* Item Grid */}

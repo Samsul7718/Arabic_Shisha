@@ -182,25 +182,28 @@ export const Catalog = () => {
                   primaryImage={item.image}
                   secondaryImage={item.secondaryImage}
                   alt={lang === 'ar' ? item.nameAr : item.nameEn}
-                  height="190px"
+                  height="280px"
+                  objectFit="contain"
                   isOutOfStock={isOutOfStock}
                   brand={item.brand}
                   lang={lang}
+                  flavorName={lang === 'ar' ? item.nameAr : item.nameEn}
+                  flavorProfile={item.profile && item.profile !== 'Hardware' ? item.profile : null}
                   onImageClick={() => setSelectedItemDetail(item)}
                   stockBadge={
                     <>
                       {isOutOfStock && (
-                        <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                           <XCircle size={14} /> {lang === 'ar' ? 'نفدت الكمية' : 'Out of Stock'}
                         </span>
                       )}
                       {isLowStock && (
-                        <span style={{ background: 'rgba(255, 159, 28, 0.9)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <span style={{ background: 'rgba(255, 159, 28, 0.95)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                           <AlertTriangle size={14} /> {lang === 'ar' ? `متبقي ${item.stockQty} فقط` : `Low Stock (${item.stockQty} left)`}
                         </span>
                       )}
                       {item.stockStatus === 'in_stock' && (
-                        <span style={{ background: 'rgba(42, 157, 143, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <span style={{ background: 'rgba(42, 157, 143, 0.92)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                           <CheckCircle size={14} /> {lang === 'ar' ? 'متوفر بالمخزن' : 'In Stock'}
                         </span>
                       )}
@@ -211,11 +214,60 @@ export const Catalog = () => {
                 {/* Card Body */}
                 <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                   <div>
+                    {/* Flavor & Category Tag Bar right down side of the image */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.45rem' }}>
+                      {item.brand && (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: 'var(--accent-gold-light)',
+                            background: 'rgba(212, 175, 55, 0.12)',
+                            border: '1px solid var(--border-gold)',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-full)'
+                          }}
+                        >
+                          {item.brand}
+                        </span>
+                      )}
+                      {item.profile && item.profile !== 'Hardware' && (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            color: '#2ec4b6',
+                            background: 'rgba(46, 196, 182, 0.12)',
+                            border: '1px solid rgba(46, 196, 182, 0.3)',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-full)'
+                          }}
+                        >
+                          {item.profile}
+                        </span>
+                      )}
+                      {item.strength && item.strength !== 'N/A' && (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--border-subtle)',
+                            padding: '2px 7px',
+                            borderRadius: 'var(--radius-full)'
+                          }}
+                        >
+                          {item.strength}
+                        </span>
+                      )}
+                    </div>
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.3 }}>
                         {lang === 'ar' ? item.nameAr : item.nameEn}
                       </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#ffb703', fontSize: '0.85rem', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#ffb703', fontSize: '0.85rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem' }}>
                         <Star size={14} fill="#ffb703" />
                         <span>{item.rating}</span>
                       </div>

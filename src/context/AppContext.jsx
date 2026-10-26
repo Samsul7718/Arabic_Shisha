@@ -19,34 +19,26 @@ const getDeletedIds = (storageKey) => {
  * Both types of products will be preserved and displayed on the web page.
  */
 export const mergeShishaItems = (codeItems = [], savedItems = [], deletedIds = new Set()) => {
-  const codeIdSet = new Set((codeItems || []).map((i) => i.id));
   const savedItemMap = new Map();
-  const customItems = [];
 
   if (Array.isArray(savedItems)) {
     savedItems.forEach((item) => {
       if (!item || !item.id || deletedIds.has(item.id)) return;
-
-      // Custom items created directly from Cloudinary / Admin Panel
-      if (item.isCustom || item.id.startsWith('custom_') || !codeIdSet.has(item.id)) {
-        customItems.push({ ...item, isCustom: true });
-      } else {
-        savedItemMap.set(item.id, item);
-      }
+      savedItemMap.set(item.id, item);
     });
   }
 
-  // Process code items from shishaData.js
-  const mergedCodeItems = (codeItems || [])
+  // Items defined in shishaData.js are the master source of truth.
+  // If an item is deleted from shishaData.js, it is permanently removed upon reload.
+  const mergedItems = (codeItems || [])
     .filter((codeItem) => !deletedIds.has(codeItem.id))
     .map((codeItem) => {
       const savedOverride = savedItemMap.get(codeItem.id);
       if (!savedOverride) {
-        // Newly added in shishaData.js (e.g. item_3, item_4)
         return codeItem;
       }
 
-      // Merge: keep code item base, but preserve admin modifications
+      // Merge: keep code item base, but preserve admin modifications (images, stock, etc.)
       return {
         ...codeItem,
         image: savedOverride.customImage || (savedOverride.image && savedOverride.image !== codeItem.image)
@@ -75,7 +67,7 @@ export const mergeShishaItems = (codeItems = [], savedItems = [], deletedIds = n
   // Ensure unique IDs
   const seenIds = new Set();
   const result = [];
-  for (const item of [...customItems, ...mergedCodeItems]) {
+  for (const item of mergedItems) {
     if (!seenIds.has(item.id)) {
       seenIds.add(item.id);
       result.push(item);
@@ -85,19 +77,12 @@ export const mergeShishaItems = (codeItems = [], savedItems = [], deletedIds = n
 };
 
 export const mergeRentalPots = (codePots = [], savedPots = [], deletedIds = new Set()) => {
-  const codeIdSet = new Set((codePots || []).map((p) => p.id));
   const savedPotMap = new Map();
-  const customPots = [];
 
   if (Array.isArray(savedPots)) {
     savedPots.forEach((pot) => {
       if (!pot || !pot.id || deletedIds.has(pot.id)) return;
-
-      if (pot.isCustom || (pot.id.startsWith('rent_') && !codeIdSet.has(pot.id)) || !codeIdSet.has(pot.id)) {
-        customPots.push({ ...pot, isCustom: true });
-      } else {
-        savedPotMap.set(pot.id, pot);
-      }
+      savedPotMap.set(pot.id, pot);
     });
   }
 
@@ -132,7 +117,7 @@ export const mergeRentalPots = (codePots = [], savedPots = [], deletedIds = new 
 
   const seenIds = new Set();
   const result = [];
-  for (const pot of [...customPots, ...mergedCodePots]) {
+  for (const pot of mergedCodePots) {
     if (!seenIds.has(pot.id)) {
       seenIds.add(pot.id);
       result.push(pot);
