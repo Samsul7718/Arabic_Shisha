@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ShoppingBag, Globe, Flame, Store, Truck, Sparkles, Sliders, Clock, Cloud } from 'lucide-react';
+import { ShoppingBag, Globe, Store, Truck, Sparkles, Sliders, Clock, Cloud, X } from 'lucide-react';
+import shopImage from '../assets/shop.jpg';
 
 export const Header = () => {
   const {
@@ -16,6 +17,8 @@ export const Header = () => {
     setAdminSubTab
   } = useApp();
 
+  const [showShopModal, setShowShopModal] = useState(false);
+
   const navItems = [
     { id: 'catalog', labelEn: 'Shop', labelAr: 'المجلس والمتجر', icon: Store },
     { id: 'rental', labelEn: 'Rent a Hookah', labelAr: 'تأجير شيشة', icon: Truck },
@@ -29,20 +32,53 @@ export const Header = () => {
     <header className="glass-panel" style={{ margin: '1rem auto', maxWidth: '1250px', padding: '1rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         
-        {/* Brand Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setActiveTab('catalog')}>
-          <div style={{
-            background: 'linear-gradient(135deg, #d4af37, #ff9f1c)',
-            padding: '0.6rem',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: 'var(--shadow-gold-glow)'
-          }}>
-            <Flame size={26} color="#0b0d12" />
+        {/* Brand Logo with Real Shop Image */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div 
+            onClick={() => setShowShopModal(true)}
+            title={lang === 'ar' ? 'انقر لعرض صورة المتجر الحقيقي' : 'Click to view physical store photo'}
+            style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '50%',
+              padding: '2.5px',
+              background: 'linear-gradient(135deg, #d4af37, #ff9f1c)',
+              boxShadow: 'var(--shadow-gold-glow)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              overflow: 'hidden',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.08)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.7)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-gold-glow)';
+            }}
+          >
+            <img 
+              src={shopImage} 
+              alt="Arabic Shisha Shop" 
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                objectPosition: 'center 22%',
+                display: 'block'
+              }} 
+            />
           </div>
-          <div>
+          <div 
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('catalog')}
+            title={lang === 'ar' ? 'الرئيسية والمتجر' : 'Go to Catalog'}
+          >
             <h1 className="gold-gradient-text" style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, lineHeight: 1.1 }}>
               {lang === 'ar' ? 'متجر ومجلس الشيشة العربي' : 'Arabic Shisha'}
             </h1>
@@ -189,6 +225,120 @@ export const Header = () => {
         </div>
 
       </div>
+
+      {/* Storefront Photo Lightbox Modal */}
+      {showShopModal && (
+        <div 
+          onClick={() => setShowShopModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            animation: 'fadeIn 0.2s ease'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="glass-panel"
+            style={{
+              maxWidth: '480px',
+              width: '100%',
+              background: 'linear-gradient(180deg, #161a23 0%, #0d0f15 100%)',
+              border: '1px solid var(--border-gold)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.3)'
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <img 
+                src={shopImage} 
+                alt="Arabic Shisha Physical Store" 
+                style={{ width: '100%', maxHeight: '430px', objectFit: 'cover', display: 'block' }}
+              />
+              <button
+                onClick={() => setShowShopModal(false)}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: 'rgba(0,0,0,0.65)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                <Store size={22} color="#d4af37" />
+                <h3 className="gold-gradient-text" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>
+                  {lang === 'ar' ? 'متجر ومجلس الشيشة العربي' : 'Arabic Shisha Storefront'}
+                </h3>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', margin: '0 0 1.25rem', lineHeight: 1.55 }}>
+                {lang === 'ar' 
+                  ? 'مرحباً بكم في متجرنا! تجدون لدينا أفضل ماركات الشيشة (الروسية، مايا، الفاخر، أفضال، بونتشي، كوكو آيا)، نكهات معسل، فحم طبيعي وسريع، وخدمات تأجير منازل وحفلات.'
+                  : 'Welcome to our physical shop! Complete collection of Russian pots, Maya, Afzal flavors, premium coals, 24/7 home rentals, and party catering.'}
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <a
+                  href={`https://wa.me/${adminWhatsAppPhone || '919960154761'}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    flex: 1,
+                    background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                    color: '#fff',
+                    padding: '0.65rem 1rem',
+                    borderRadius: 'var(--radius-full)',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <span>{lang === 'ar' ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}</span>
+                </a>
+                <button
+                  onClick={() => setShowShopModal(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: 'var(--radius-full)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  {lang === 'ar' ? 'إغلاق' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
