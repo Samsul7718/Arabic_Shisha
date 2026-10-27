@@ -191,23 +191,20 @@ export const Catalog = () => {
                   flavorProfile={item.profile && item.profile !== 'Hardware' ? item.profile : null}
                   onImageClick={() => setSelectedItemDetail(item)}
                   stockBadge={
-                    <>
-                      {isOutOfStock && (
-                        <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
-                          <XCircle size={14} /> {lang === 'ar' ? 'نفدت الكمية' : 'Out of Stock'}
-                        </span>
-                      )}
-                      {isLowStock && (
-                        <span style={{ background: 'rgba(255, 159, 28, 0.95)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
-                          <AlertTriangle size={14} /> {lang === 'ar' ? `متبقي ${item.stockQty} فقط` : `Low Stock (${item.stockQty} left)`}
-                        </span>
-                      )}
-                      {item.stockStatus === 'in_stock' && (
-                        <span style={{ background: 'rgba(42, 157, 143, 0.92)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
-                          <CheckCircle size={14} /> {lang === 'ar' ? 'متوفر بالمخزن' : 'In Stock'}
-                        </span>
-                      )}
-                    </>
+                    (isOutOfStock || isLowStock) ? (
+                      <>
+                        {isOutOfStock && (
+                          <span style={{ background: 'rgba(230, 57, 70, 0.9)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                            <XCircle size={14} /> {lang === 'ar' ? 'نفدت الكمية' : 'Out of Stock'}
+                          </span>
+                        )}
+                        {isLowStock && (
+                          <span style={{ background: 'rgba(255, 159, 28, 0.95)', color: '#000', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', boxShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                            <AlertTriangle size={14} /> {lang === 'ar' ? `متبقي ${item.stockQty} فقط` : `Low Stock (${item.stockQty} left)`}
+                          </span>
+                        )}
+                      </>
+                    ) : null
                   }
                 />
 
@@ -281,9 +278,17 @@ export const Catalog = () => {
                   {/* Card Footer */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
                     <div>
-                      <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-gold)' }}>
-                        {formatCurrency(item.price)}
-                      </span>
+                      {isOutOfStock ? (
+                        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#e63946', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <XCircle size={16} />
+                          <span>{lang === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '1rem', fontWeight: 700, color: '#22c55e', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <CheckCircle size={16} color="#22c55e" />
+                          <span>{lang === 'ar' ? 'متوفر' : 'Available'}</span>
+                        </span>
+                      )}
                     </div>
 
                     <button

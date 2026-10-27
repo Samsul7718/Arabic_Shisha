@@ -1745,54 +1745,52 @@ export const AdminManager = () => {
                       <span style={{ fontSize: '0.72rem', color: 'var(--accent-amber)', textTransform: 'uppercase', fontWeight: 700 }}>
                         {item.brand}
                       </span>
-
-                      {/* Stock Toggle Badge */}
-                      <button
-                        onClick={() => toggleStockStatus(item.id, false)}
-                        title={lang === 'ar' ? 'انقر لتغيير حالة توفر المنتج' : 'Click to toggle availability'}
-                        style={{
-                          background:
-                            item.stockStatus === 'in_stock'
-                              ? 'rgba(42, 157, 143, 0.2)'
-                              : item.stockStatus === 'low_stock'
-                              ? 'rgba(244, 162, 97, 0.2)'
-                              : 'rgba(230, 57, 70, 0.2)',
-                          color:
-                            item.stockStatus === 'in_stock'
-                              ? '#2a9d8f'
-                              : item.stockStatus === 'low_stock'
-                              ? '#f4a261'
-                              : '#e63946',
-                          border: '1px solid currentColor',
-                          borderRadius: 'var(--radius-full)',
-                          padding: '0.2rem 0.6rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}
-                      >
-                        {item.stockStatus === 'in_stock' && <CheckCircle size={12} />}
-                        {item.stockStatus === 'low_stock' && <AlertTriangle size={12} />}
-                        {item.stockStatus === 'out_of_stock' && <XCircle size={12} />}
-                        <span>
-                          {item.stockStatus === 'in_stock'
-                            ? lang === 'ar' ? 'متوفر' : 'In Stock'
-                            : item.stockStatus === 'low_stock'
-                            ? lang === 'ar' ? 'كمية قليلة' : 'Low Stock'
-                            : lang === 'ar' ? 'غير متوفر' : 'Out of Stock'}
-                        </span>
-                      </button>
                     </div>
 
                     <h4 style={{ margin: '0.3rem 0', fontSize: '1rem', fontWeight: 700 }}>
                       {lang === 'ar' ? item.nameAr : item.nameEn}
                     </h4>
 
-                    <div style={{ fontWeight: 800, color: 'var(--accent-gold-light)', fontSize: '0.95rem', marginBottom: '0.6rem' }}>
-                      {formatCurrency(item.price)}
+                    {/* Stock status in place of amount */}
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <button
+                        onClick={() => toggleStockStatus(item.id, false)}
+                        title={lang === 'ar' ? 'انقر لتغيير حالة توفر المنتج' : 'Click to toggle availability'}
+                        style={{
+                          background:
+                            item.stockStatus === 'in_stock'
+                              ? 'rgba(34, 197, 94, 0.12)'
+                              : item.stockStatus === 'low_stock'
+                              ? 'rgba(244, 162, 97, 0.2)'
+                              : 'rgba(230, 57, 70, 0.2)',
+                          color:
+                            item.stockStatus === 'in_stock'
+                              ? '#22c55e'
+                              : item.stockStatus === 'low_stock'
+                              ? '#f4a261'
+                              : '#e63946',
+                          border: '1px solid currentColor',
+                          borderRadius: 'var(--radius-full)',
+                          padding: '0.22rem 0.65rem',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                      >
+                        {item.stockStatus === 'in_stock' && <CheckCircle size={14} color="#22c55e" />}
+                        {item.stockStatus === 'low_stock' && <AlertTriangle size={14} />}
+                        {item.stockStatus === 'out_of_stock' && <XCircle size={14} />}
+                        <span>
+                          {item.stockStatus === 'in_stock'
+                            ? lang === 'ar' ? 'متوفر' : 'Available'
+                            : item.stockStatus === 'low_stock'
+                            ? lang === 'ar' ? 'كمية قليلة' : 'Low Stock'
+                            : lang === 'ar' ? 'غير متوفر' : 'Out of Stock'}
+                        </span>
+                      </button>
                     </div>
                   </div>
 
