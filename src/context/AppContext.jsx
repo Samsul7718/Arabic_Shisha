@@ -455,7 +455,7 @@ export const AppProvider = ({ children }) => {
     const newOrder = {
       orderId: `ASL-${Math.floor(1000 + Math.random() * 9000)}`,
       items: [...cart],
-      totalAmount: cart.reduce((acc, item) => acc + item.price * item.qty, 0) + 15,
+      totalAmount: 0,
       paymentMethod,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       statusStep: 1

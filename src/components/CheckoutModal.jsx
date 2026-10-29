@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, CreditCard, DollarSign, Smartphone, CheckCircle, ShieldCheck } from 'lucide-react';
-import { formatCurrency } from '../utils/helpers';
+import { X, CreditCard, DollarSign, Smartphone, CheckCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const CheckoutModal = () => {
@@ -9,7 +8,6 @@ export const CheckoutModal = () => {
     lang,
     isCheckoutOpen,
     setIsCheckoutOpen,
-    subtotalCartPrice,
     createOrder,
     cart
   } = useApp();
@@ -20,7 +18,7 @@ export const CheckoutModal = () => {
 
   if (!isCheckoutOpen) return null;
 
-  const totalAmount = subtotalCartPrice + 15;
+  const totalItemsCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
   const handlePayNow = () => {
     setIsProcessing(true);
@@ -47,6 +45,7 @@ export const CheckoutModal = () => {
       bottom: 0,
       background: 'rgba(5, 7, 10, 0.85)',
       backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
       zIndex: 1050,
       display: 'flex',
       alignItems: 'center',
@@ -58,27 +57,30 @@ export const CheckoutModal = () => {
         width: '100%',
         padding: '1.8rem',
         position: 'relative',
-        boxShadow: 'var(--shadow-card)'
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-gold)',
+        borderRadius: 'var(--radius-md)'
       }}>
         {/* Close Button */}
         <button
           onClick={() => setIsCheckoutOpen(false)}
+          title={lang === 'ar' ? 'إغلاق' : 'Close'}
           style={{ position: 'absolute', top: '1rem', right: lang === 'ar' ? 'auto' : '1rem', left: lang === 'ar' ? '1rem' : 'auto', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}
         >
           <X size={20} />
         </button>
 
         <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
-          {lang === 'ar' ? 'الدفع الإلكتروني وتأكيد الطلب' : 'Digital Checkout & Payment'}
+          {lang === 'ar' ? 'تأكيد وإرسال الطلب للمجلس' : 'Confirm & Place Shisha Order'}
         </h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          {lang === 'ar' ? 'اختر طريقة الدفع المناسبة لتوصيل الشيشة فوراً لطاولتك' : 'Select your instant digital payment method for table delivery.'}
+          {lang === 'ar' ? 'حدد رقم طاولتك وخيار الخدمة لتوصيل الشيشة فوراً' : 'Select your lounge table location for instant delivery.'}
         </p>
 
         {/* Table Number Selector */}
         <div style={{ marginBottom: '1.2rem' }}>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-            {lang === 'ar' ? 'رقم الطاولة في المجلس:' : 'Lounge Table Location:'}
+            {lang === 'ar' ? 'موقع الطاولة أو المجلس:' : 'Lounge Table Location:'}
           </label>
           <select
             value={tableNumber}
@@ -91,18 +93,18 @@ export const CheckoutModal = () => {
           </select>
         </div>
 
-        {/* Payment Methods */}
+        {/* Service Options */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.6rem' }}>
-            {lang === 'ar' ? 'طريقة الدفع:' : 'Payment Method:'}
+            {lang === 'ar' ? 'طريقة الخدمة والتسليم:' : 'Service Preference:'}
           </label>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <div
-              onClick={() => setPaymentMethod('apple_pay')}
+              onClick={() => setPaymentMethod('table_service')}
               style={{
-                background: paymentMethod === 'apple_pay' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
-                border: paymentMethod === 'apple_pay' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
+                background: paymentMethod === 'table_service' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
+                border: paymentMethod === 'table_service' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
                 padding: '0.8rem 1rem',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
@@ -112,17 +114,17 @@ export const CheckoutModal = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 }}>
-                <Smartphone size={18} color="#d4af37" />
-                <span>Apple Pay / Tap to Pay</span>
+                <CheckCircle2 size={18} color="#d4af37" />
+                <span>{lang === 'ar' ? 'خدمة الطاولة المباشرة' : 'Direct Table Service'}</span>
               </div>
-              {paymentMethod === 'apple_pay' && <CheckCircle size={16} color="#d4af37" />}
+              {paymentMethod === 'table_service' && <CheckCircle size={16} color="#d4af37" />}
             </div>
 
             <div
-              onClick={() => setPaymentMethod('card')}
+              onClick={() => setPaymentMethod('takeaway')}
               style={{
-                background: paymentMethod === 'card' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
-                border: paymentMethod === 'card' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
+                background: paymentMethod === 'takeaway' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
+                border: paymentMethod === 'takeaway' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
                 padding: '0.8rem 1rem',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
@@ -133,42 +135,24 @@ export const CheckoutModal = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 }}>
                 <CreditCard size={18} color="#d4af37" />
-                <span>Credit / Debit Card</span>
+                <span>{lang === 'ar' ? 'استلام من الكاونتر' : 'Counter Pickup'}</span>
               </div>
-              {paymentMethod === 'card' && <CheckCircle size={16} color="#d4af37" />}
-            </div>
-
-            <div
-              onClick={() => setPaymentMethod('cash')}
-              style={{
-                background: paymentMethod === 'cash' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(11, 13, 18, 0.6)',
-                border: paymentMethod === 'cash' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
-                padding: '0.8rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 }}>
-                <DollarSign size={18} color="#d4af37" />
-                <span>{lang === 'ar' ? 'الدفع نقداً للطاولة' : 'Pay Cash at Table'}</span>
-              </div>
-              {paymentMethod === 'cash' && <CheckCircle size={16} color="#d4af37" />}
+              {paymentMethod === 'takeaway' && <CheckCircle size={16} color="#d4af37" />}
             </div>
           </div>
         </div>
 
-        {/* Amount Summary */}
+        {/* Order Review (Zero amounts, zero extra charges) */}
         <div style={{ background: 'rgba(11, 13, 18, 0.7)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            <span>{lang === 'ar' ? 'إجمالي الطلبات:' : 'Items Total:'}</span>
-            <span style={{ fontWeight: 800, color: 'var(--accent-gold)' }}>{formatCurrency(totalAmount)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>{lang === 'ar' ? 'إجمالي محتويات الطلب:' : 'Order Contents:'}</span>
+            <span style={{ fontWeight: 800, color: 'var(--accent-gold)' }}>
+              {totalItemsCount} {lang === 'ar' ? 'عناصر' : 'Items'}
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#2a9d8f', marginTop: '0.5rem' }}>
-            <ShieldCheck size={14} />
-            <span>Encrypted SSL 256-bit Digital Checkout</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#22c55e', marginTop: '0.5rem' }}>
+            <CheckCircle size={14} color="#22c55e" />
+            <span>{lang === 'ar' ? 'جميع الطلبات متوفرة وجاهزة للتجهيز الفوري' : 'All items verified in stock & ready'}</span>
           </div>
         </div>
 
@@ -189,7 +173,7 @@ export const CheckoutModal = () => {
             boxShadow: 'var(--shadow-gold-glow)'
           }}
         >
-          {isProcessing ? (lang === 'ar' ? 'جاري تنفيذ العملية...' : 'Processing Payment...') : (lang === 'ar' ? `تأكيد ودفع ${formatCurrency(totalAmount)}` : `Pay ${formatCurrency(totalAmount)} Now`)}
+          {isProcessing ? (lang === 'ar' ? 'جاري إرسال الطلب...' : 'Placing Order...') : (lang === 'ar' ? 'تأكيد وإرسال الطلب' : 'Confirm & Place Order')}
         </button>
 
       </div>

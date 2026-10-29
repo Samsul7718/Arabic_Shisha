@@ -167,11 +167,13 @@ export const Catalog = () => {
               <div
                 key={item.id ? `${item.id}-${idx}` : `item-${idx}`}
                 className="glass-panel card-hover-effect"
+                onClick={() => setSelectedItemDetail(item)}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   overflow: 'hidden',
                   position: 'relative',
+                  cursor: 'pointer',
                   opacity: isOutOfStock ? 0.7 : 1,
                   transition: 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
                   borderRadius: 'var(--radius-md)'

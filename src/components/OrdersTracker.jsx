@@ -67,8 +67,20 @@ export const OrdersTracker = () => {
                   • Placed at {order.timestamp}
                 </span>
               </div>
-              <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.1rem' }}>
-                {formatCurrency(order.totalAmount)}
+              <div style={{
+                color: '#22c55e',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.25)',
+                padding: '3px 10px',
+                borderRadius: 'var(--radius-full)'
+              }}>
+                <CheckCircle2 size={14} color="#22c55e" />
+                <span>{lang === 'ar' ? 'طلب مؤكد' : 'Order Confirmed'}</span>
               </div>
             </div>
 
@@ -115,7 +127,7 @@ export const OrdersTracker = () => {
               {order.items.map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
                   <span>{item.qty}x {lang === 'ar' ? item.nameAr : item.nameEn}</span>
-                  <span>{formatCurrency(item.price * item.qty)}</span>
+                  <span style={{ color: '#22c55e', fontSize: '0.82rem', fontWeight: 600 }}>✓ {lang === 'ar' ? 'متوفر' : 'Available'}</span>
                 </div>
               ))}
             </div>
